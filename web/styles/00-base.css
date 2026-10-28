@@ -1,0 +1,92 @@
+/* vortexlabs_carhud · VortexLabs — base. Paleta, tipografía y geometría: 00-0-vortexlabs-tokens.css */
+
+:root {
+  /* HUD: roles sobre la paleta VortexLabs (negro y carbón dominan; coral = atención) */
+  --fc-accent: var(--vx-coral);   /* el jugador puede cambiarlo en /carhud */
+  --fc-fg: var(--vx-gray-50);
+  --fc-muted: var(--vx-gray-300);
+  --fc-track: var(--vx-gray-700);
+  --fc-surface: var(--vx-charcoal);
+  --fc-plate: rgba(15, 15, 15, 0.92);       /* placa de la fila inferior, ubicación y avisos */
+  --fc-plate-line: var(--vx-gray-700);
+  /* Semánticos establecidos del recurso (se conservan): aviso ámbar, luces cortas
+     verdes y largas azules como en el salpicadero; el peligro pasa a coral. */
+  --fc-warn: #ffbb72;
+  --fc-danger: var(--vx-coral);
+  --fc-off: var(--vx-gray-300);
+  --fc-low: #61d59a;
+  --fc-high: #6aaaff;
+  --fc-accent-soft: rgba(254, 53, 85, 0.7);
+  --fc-accent-glow: rgba(254, 53, 85, 0.38);
+  --fc-unlit: #4a4a50;  /* segmento apagado: legible sobre fondos claros y oscuros */
+  --fc-ui: 1;
+  --fc-font: var(--vx-font-ui);
+  --fc-font-display: var(--vx-font-display);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: var(--fc-font);
+  color: var(--fc-fg);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+[hidden] { display: none !important; }
+
+.fc-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Una sola transición de visibilidad para todo el HUD: la capa .fc-hud contiene el
+   velocímetro (con nitro y fila inferior) y la ubicación, y solo ella se funde.
+   Al ser un único elemento, todos aparecen y desaparecen en el mismo fotograma,
+   con la misma duración y curva y sin retraso. La decide un único atributo
+   (data-visible en la raíz); si cambia a mitad, la transición se invierte desde
+   donde esté, sin temporizadores. */
+:root { --fc-fade: 140ms; --fc-fade-ease: cubic-bezier(0.2, 0, 0, 1); }
+
+.fc-hud {
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--fc-fade) var(--fc-fade-ease), visibility var(--fc-fade) var(--fc-fade-ease);
+}
+
+.fc-root[data-visible="false"] .fc-hud { opacity: 0; visibility: hidden; }
+
+/* Opacidad elegida por el jugador (sin transición propia). */
+.fc-module-box { opacity: var(--fc-opacity, 1); }
+
+/* Ocultación propia de la ubicación (minimapa oculto, desactivada): inmediata, como
+   el minimapa. Hereda la visibilidad de la capa del HUD en los demás casos. */
+.fc-loc[data-show="false"] { visibility: hidden; }
+
+/* Cada módulo se posiciona por JS (traslación + escala), siempre dentro de la zona segura. */
+.fc-module-box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.fc-root[data-editing="true"] .fc-module-box {
+  pointer-events: auto;
+  cursor: grab;
+  outline: 1px dashed var(--fc-accent-soft);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
+.fc-root[data-editing="true"] .fc-module-box.is-dragging { cursor: grabbing; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

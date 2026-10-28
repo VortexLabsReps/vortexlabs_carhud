@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>vortexlabs_carhud · pruebas de la NUI</title>
+<style>
+  body { margin: 0; background: #0c182e; color: #fff; font: 13px/1.5 system-ui, sans-serif; display: flex; }
+  pre { flex: 1; margin: 0; padding: 16px; white-space: pre-wrap; }
+  iframe { width: 1920px; height: 1080px; border: 0; transform: scale(.25); transform-origin: 0 0; position: absolute; right: -1440px; top: 0; background: #1c2933; }
+  .ok { color: #61d59a; } .fail { color: #ff6978; }
+</style>
+</head>
+<body>
+<pre id="out">Ejecutando…</pre>
+<iframe id="hud" src="../html/index.html"></iframe>
+<script>
+// Pruebas automáticas de html/ (la versión que carga FiveM) con mensajes como los de Lua.
+(async () => {
+  const out = document.getElementById('out');
+  const frame = document.getElementById('hud');
+  const lines = [];
+  let passed = 0, failed = 0;
+  const ok = (cond, name) => { cond ? passed++ : failed++; lines.push(`<span class="${cond ? 'ok' : 'fail'}">${cond ? 'ok  ' : 'FAIL'}</span> ${name}`); };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const posts = [];
+  window.addEventListener('message', (e) => { if (e.data && e.data.fcPost) posts.push(e.data); });
+  await new Promise((r) => frame.addEventListener('load', r, { once: true }));
+  await sleep(200);
+  const w = frame.contentWindow, d = frame.contentDocument, FC = w.FC, App = FC.App;
+  const send = async (msg, wait = 60) => { w.postMessage(msg, '*'); await sleep(wait); };
+  const car = { category: 'car', gear: true, rpm: true, throttle: true, fuel: true, engine: true, nitro: true, scaleKmh: 260, redline: 8000, telltales: { belt: true, lights: true, cruise: true, indicators: true } };
+  const lit = () => App.cluster.arcSegs.reduce((n, s) => n + s.level, 0);
+  const q = (s) => d.querySelector(s);
+  // Textos reales de locales/*.json (Lua los envía igual en 'init').
+  const L10N = { es: (await fetch('../locales/es.json').then((r) => r.json())).ui, en: (await fetch('../locales/en.json').then((r) => r.json())).ui };
+  const noticeText = () => (q('[data-notice]').hidden ? '' : q('[data-notice]').textContent);
+  // La interpolación se avanza a mano: un panel en segundo plano estrangula
+  // requestAnimationFrame y haría las pruebas dependientes del tiempo real.
+  const settle = () => { for (let i = 0; i < 300; i += 1) { App.cluster.step(1 / 60); App.strip.step(1 / 60); } };
+
+  ok(posts.some((p) => p.fcPost === 'ready'), 'la NUI avisa de que está lista');
+  await send({ t: 'init', lang: 'es', strings: L10N.es, fallback: L10N.en, settings: {}, thresholds: { fuel: 15, engine: 35 }, rules: { allowUnit: true, allowColor: true, allowLayout: true, allowModules: true, scaleMin: 0.8, scaleMax: 1.5, opacityMin: 0.4, maxVolume: 1, features: { nitro: true } } });
+  ok(q('#fc-root').dataset.visible === 'false', 'oculto hasta que Lua lo muestra');
+  ok(App.raf === 0, 'oculto: ningún requestAnimationFrame activo');
+  await send({ t: 'profile', profile: car });
+  await send({ t: 'visible', v: true });
+  await send({ t: 's', fuel: 68, eng: 92, run: true, nos: false, beltWarn: false, tt: { belt: 'on', lights: 'low', ind: 0, cruise: 0 } });
+  await send({ t: 'f', s: 0, r: 0.2, g: 1, p: 0 });
+  settle();
+  ok(App.cluster.step(1 / 60) === false && App.strip.step(1 / 60) === false, 'en reposo no queda nada que animar (el bucle no se reprograma)');
+  ok(q('.fc-root').dataset.values === 'false', 'valores numéricos ocultos por defecto');
+
+  // Proporción km/h ↔ mph
+  await send({ t: 'f', s: 130 / 3.6 });
+  settle();
+  const litKmh = lit();
+  const textKmh = q('[data-speed]').textContent;
+  await send({ t: 'settings', settings: { unit: 'mph' } });
+  settle();
+  const litMph = lit();
+  ok(litKmh === litMph && litKmh > 0, `km/h → mph: mismo arco (${litKmh} = ${litMph} niveles)`);
+  ok(textKmh === '130' && q('[data-speed]').textContent === '81', `número convertido (${textKmh} km/h → ${q('[data-speed]').textContent} mph)`);
+  ok(q('[data-unit]').textContent === 'MPH', 'unidad MPH');
+  await send({ t: 'settings', settings: {} }, 200);
+
+  // Independencia de datos
+  await send({ t: 'f', s: 0, r: 0.95, g: 1, p: 1 });
+  settle();
+  const gasLit = App.cluster.gasSegs.filter((s) => s.level > 0).length;
+  ok(lit() === 0 && gasLit === 18, 'parado con pedal a fondo: arco vacío, acelerador lleno');
+  ok(q('[data-secondary]').textContent.startsWith('7.6'), `RPM reales independientes (${q('[data-secondary]').textContent})`);
+  await send({ t: 'f', g: 0 }, 100);
+  ok(q('[data-gear]').textContent === 'R', 'marcha atrás → R');
+
+  // Testigos e intermitentes laterales
+  await send({ t: 's', tt: { belt: 'warn', lights: 'high', ind: 3, cruise: 25 } }, 100);
+  ok(q('[data-tt="belt"]').dataset.state === 'warn', 'cinturón: aviso');
+  ok(q('[data-tt="lights"]').dataset.state === 'high', 'luces: largas');
+  const L = q('[data-turn="left"]'), R = q('[data-turn="right"]');
+  ok(L.dataset.state === 'on' && R.dataset.state === 'on', 'emergencia: ambos intermitentes laterales');
+  const animL = L.getAnimations()[0], animR = R.getAnimations()[0];
+  ok(animL && animR && Math.abs((animL.currentTime || 0) - (animR.currentTime || 0)) < 1, 'emergencia: parpadeo sincronizado');
+  ok(!q('[data-tt="left"]') && !q('[data-tt="right"]') && !q('[data-tt="hazard"]'), 'sin intermitentes duplicados en la fila inferior');
+  const main = q('.fc-main').getBoundingClientRect();
+  ok(L.getBoundingClientRect().right < main.left + main.width * 0.2 && R.getBoundingClientRect().left > main.right - main.width * 0.2, 'intermitentes a ambos lados del reloj');
+  ok(q('#fc-cluster').dataset.cruise === 'true', 'crucero activo: marca en el arco');
+  await send({ t: 's', tt: { belt: 'off', lights: 'off', ind: 1, cruise: 0 } }, 100);
+  ok(L.dataset.state === 'on' && R.dataset.state === 'off', 'intermitente izquierdo');
+  await send({ t: 's', tt: { ind: 0 } }, 100);
+  ok(L.dataset.state === 'off' && R.dataset.state === 'off', 'intermitentes apagados');
+  ok(q('#fc-cluster').dataset.cruise === 'false', 'crucero inactivo');
+
+  // Distribución: un solo conjunto abajo a la derecha
+  ok(!q('#fc-strip') && !q('[data-mod="turbo"]'), 'sin franja central ni módulo de turbo');
+  const cr = q('#fc-cluster').getBoundingClientRect();
+  ok(cr.right > 1920 * 0.95 && cr.bottom > 1080 * 0.95, 'conjunto en la esquina inferior derecha');
+  const footer = q('[data-footer]');
+  const order = [...footer.querySelectorAll('[data-tt], [data-mod]')].filter((e) => !e.hidden).map((e) => e.dataset.tt || e.dataset.mod).join(',');
+  ok(order === 'belt,lights,cruise,fuel,engine', `fila inferior: ${order}`);
+  const gasBox = q('[data-gas]').getBoundingClientRect();
+  ok(footer.getBoundingClientRect().top >= gasBox.bottom, 'la fila va debajo del acelerador');
+  ok(getComputedStyle(q('#fc-cluster'), '::before').backgroundImage.includes('radial-gradient'), 'fondo radial difuminado detrás del conjunto');
+  ok(getComputedStyle(q('.fc-reading')).textShadow !== 'none', 'sombra discreta en cifras y unidades');
+
+  // Nitro: anillo pequeño encima, solo su carga restante
+  const nitro = q('[data-nitro-ring]');
+  ok(nitro.hidden && q('#fc-cluster').dataset.nitro === 'false', 'sin nitro equipado: anillo oculto');
+  const hNoNitro = q('#fc-cluster').getBoundingClientRect();
+  await send({ t: 's', nos: { amt: 74, cap: 100, on: false } }, 100);
+  settle();
+  const hNitro = q('#fc-cluster').getBoundingClientRect();
+  ok(!nitro.hidden && nitro.getBoundingClientRect().bottom <= q('.fc-main').getBoundingClientRect().top + 1, 'nitro encima del velocímetro');
+  ok(nitro.getBoundingClientRect().width < q('.fc-arc').getBoundingClientRect().width * 0.6, 'nitro más pequeño');
+  ok(Math.abs(hNitro.bottom - hNoNitro.bottom) < 1 && Math.abs(hNitro.right - hNoNitro.right) < 1, 'el velocímetro no se mueve al aparecer el nitro');
+  const nLit = App.strip.nitroSegs.filter((x) => x.level > 0).length;
+  ok(nLit === 29 || nLit === 28, `aro = carga restante (74 % → ${nLit}/38 segmentos)`);
+  ok(App.strip.nitroSegs.length === 38 && App.strip.nitroSegs[37].el.getAttribute('stroke-width') > App.strip.nitroSegs[0].el.getAttribute('stroke-width'), 'misma geometría: 38 segmentos de tamaño progresivo');
+  const segColor = (i) => App.strip.nitroSegs[i].el.getAttribute('stroke');
+  ok(segColor(0) !== segColor(20) && segColor(20) === segColor(27) && segColor(27) === 'rgb(245,245,247)', 'misma escala que el velocímetro: neutra en rango normal (sin coral al 74 %)');
+  ok(q('[data-nitro-value]').offsetParent === null && !/\d/.test(nitro.innerText), 'sin texto ni porcentaje por defecto');
+  await send({ t: 's', nos: { amt: 50, cap: 100, on: true } }, 100);
+  ok(nitro.dataset.state === 'active', 'nitro en uso: rayo iluminado');
+  ok(!/NITRO/i.test(q('#fc-cluster').innerText), 'sin el texto «NITRO ACTIVO»');
+  await send({ t: 's', nos: { amt: 0, cap: 100, on: false } }, 100);
+  settle();
+  ok(nitro.dataset.state === 'empty' && App.strip.nitroSegs.every((x) => x.level === 0), 'nitro agotado: aro vacío');
+  await send({ t: 's', nos: false }, 100);
+  ok(nitro.hidden, 'nitro retirado: el anillo desaparece');
+
+  // Identidad VortexLabs: arco neutro en rango normal; coral solo en el último quinto de la escala
+  const arcColor = (i) => App.cluster.arcSegs[i].el.getAttribute('stroke');
+  const coralish = (c) => { const [r, g, b] = (c.match(/\d+/g) || []).map(Number); return r > 240 && g < 120 && b < 140; };
+  await send({ t: 'f', s: 130 / 3.6 }, 60);
+  settle();
+  const litMid = App.cluster.arcSegs.filter((x) => x.level > 0);
+  ok(litMid.length > 0 && !litMid.some((x) => coralish(x.el.getAttribute('stroke'))), 'velocidad media (130 de 260 km/h): arco sin coral');
+  await send({ t: 'f', s: 255 / 3.6 }, 60);
+  settle();
+  const n = App.cluster.arcSegs.length;
+  ok(coralish(arcColor(n - 2)) && !coralish(arcColor(Math.floor(n * 0.6))), 'cerca del máximo: solo el último tramo del arco pasa a coral');
+  await send({ t: 'f', s: 0 }, 60);
+  settle();
+
+  // Escala y opacidad del conjunto
+  await send({ t: 'settings', settings: { cluster: { scale: 1, opacity: 0.6 } } }, 100);
+  ok(q('#fc-cluster').style.getPropertyValue('--fc-opacity') === '0.60', 'opacidad del conjunto configurable (variable CSS, sin transición propia)');
+  const before12 = q('#fc-cluster').getBoundingClientRect().width;
+  await send({ t: 'settings', settings: { cluster: { scale: 1.2 } } }, 100);
+  ok(Math.abs(q('#fc-cluster').getBoundingClientRect().width / before12 - 1.2) < 0.01, 'escala del conjunto configurable');
+  await send({ t: 'settings', settings: {} }, 100);
+  ok(q('#fc-cluster').style.getPropertyValue('--fc-opacity') === '', 'opacidad 100 % por defecto');
+
+  // Estado del motor: color continuo desde daños leves
+  const eng = q('[data-mod="engine"]');
+  const engIcon = eng.querySelector('.fc-mini-icon');
+  const engBar = eng.querySelector('[data-bar]');
+  const rgb = (css) => (css.match(/\d+/g) || []).slice(0, 3).map(Number);
+  const near = (a, b, tol) => a.length === 3 && a.every((v, i) => Math.abs(v - b[i]) <= tol);
+  const setEng = async (v) => { await send({ t: 's', eng: v, run: true }, 60); settle(); settle(); };
+  const expected = { 100: [245, 245, 247], 90: [236, 235, 228], 75: [230, 221, 154], 55: [255, 211, 77], 35: [255, 148, 66], 15: [254, 53, 85], 5: [254, 53, 85] };
+  for (const [pct, color] of Object.entries(expected)) {
+    await setEng(Number(pct));
+    const got = rgb(engIcon.style.color);
+    ok(near(got, color, 3) && engBar.style.backgroundColor === engIcon.style.color, `motor ${pct} %: icono y barra rgb(${got})`);
+    ok(Math.abs(parseFloat(engBar.style.transform.match(/scaleX\(([\d.]+)/)[1]) - pct / 100) < 0.01, `motor ${pct} %: longitud de la barra = salud restante`);
+  }
+  await setEng(95);
+  const c95 = rgb(engIcon.style.color);
+  ok(!near(c95, expected[100], 3) && !near(c95, expected[90], 3), `daño leve (95 %): color ya intermedio rgb(${c95})`);
+  ok(!/MOTOR/.test(noticeText()), 'daño leve: sin aviso «Motor dañado»');
+  await setEng(60);
+  ok(!/MOTOR/.test(noticeText()) && eng.dataset.warn !== 'true', 'daño moderado (60 %): color amarillo, aún sin aviso');
+  await setEng(30);
+  ok(noticeText().includes('MOTOR DAÑADO'), 'daño grave (30 %): aviso con su propio umbral');
+  // Reparación: el color vuelve gradualmente (sin saltar al blanco neutro)
+  await send({ t: 's', eng: 100 }, 60);
+  const steps = [];
+  for (let i = 0; i < 6; i += 1) { App.strip.step(1 / 60); steps.push(rgb(engIcon.style.color)); }
+  ok(!near(steps[0], expected[100], 3) && steps[5][1] >= steps[0][1], 'reparación: transición gradual hacia el blanco neutro');
+  settle(); settle(); settle();
+  ok(near(rgb(engIcon.style.color), expected[100], 3) && !/MOTOR/.test(noticeText()), 'reparado: blanco neutro (sano, sin pedir atención) y sin aviso');
+
+  // Tamaño
+  await send({ t: 'settings', settings: {} }, 100);
+  const baseW = q('#fc-cluster').getBoundingClientRect().width;
+  ok(Math.abs(baseW / (254 * 0.92) - 1.10) < 0.01, `tamaño predeterminado +10 % (${(254 * 0.92).toFixed(0)} → ${baseW.toFixed(0)} px a 1080p)`);
+  await send({ t: 'settings', settings: { cluster: { scale: 1.5 } } }, 100);
+  const big = q('#fc-cluster').getBoundingClientRect();
+  ok(Math.abs(big.width / baseW - 1.5) < 0.01 && big.top >= 0 && big.bottom <= 1080, 'escala 150 %: proporcional y sin recortes');
+  frame.style.width = '1280px'; frame.style.height = '600px';
+  await sleep(50);
+  w.dispatchEvent(new w.Event('resize'));
+  await sleep(150);
+  const tiny = q('#fc-cluster').getBoundingClientRect();
+  ok(tiny.top >= 0 && tiny.bottom <= 600 && tiny.right <= 1280, 'pantalla pequeña con 150 %: se reduce para no recortarse');
+  frame.style.width = ''; frame.style.height = '';
+  await sleep(50);
+  w.dispatchEvent(new w.Event('resize'));
+  await sleep(100);
+  await send({ t: 'openSettings' }, 150);
+  const slider = q('[data-scale="cluster"]');
+  ok(slider.min === '80' && slider.max === '150', 'deslizador de escala 80–150 %');
+  ok(q('[data-scale-out="cluster"]').textContent === '150%', 'muestra el valor actual');
+  slider.value = '120';
+  slider.dispatchEvent(new w.Event('input'));
+  await sleep(50);
+  ok(Math.abs(q('#fc-cluster').getBoundingClientRect().width / baseW - 1.2) < 0.01, 'vista previa inmediata al mover el deslizador');
+  q('[data-action="reset-scale"]').click();
+  await sleep(350);
+  ok(Math.abs(q('#fc-cluster').getBoundingClientRect().width / baseW - 1) < 0.01, 'restablecer vuelve al 100 %');
+  const savedScale = posts.filter((p) => p.fcPost === 'save').pop();
+  ok(savedScale && savedScale.data.settings.cluster.scale === 1, 'el tamaño se envía a Lua para guardarlo (KVP por jugador)');
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  await sleep(100);
+
+  // Combustible y motor
+  await send({ t: 's', fuel: -1 }, 100);
+  settle();
+  ok(q('[data-mod="fuel"]').dataset.nodata === 'true' && q('[data-mod="fuel"] [data-value]').textContent === '—', 'combustible sin dato: atenuado y «—», sin aviso');
+  ok(!/COMBUSTIBLE|RESERVA/.test(q('[data-notice]').textContent), 'sin dato no se confunde con vacío');
+  await send({ t: 's', fuel: 0 }, 100);
+  settle();
+  ok(q('[data-mod="fuel"] [data-value]').textContent === '0%' && q('[data-mod="fuel"]').dataset.warn === 'true', 'depósito vacío: 0 %');
+  ok(q('[data-notice]').textContent.includes('SIN COMBUSTIBLE'), 'aviso de depósito vacío');
+  await send({ t: 's', fuel: false }, 200);
+  ok(q('[data-mod="fuel"]').hidden, 'sin combustible aplicable: módulo oculto');
+
+  // Ajustes
+  await send({ t: 'openSettings' }, 200);
+  ok(!q('[data-settings]').hidden, 'menú abierto');
+  q('[data-action="edit-layout"]').click();
+  ok(q('#fc-root').dataset.editing === 'true', 'modo mover activado');
+  const box = q('#fc-cluster');
+  const before = box.getBoundingClientRect();
+  const fire = (type, x, y) => box.dispatchEvent(new w.PointerEvent(type, { bubbles: true, pointerId: 1, button: 0, clientX: x, clientY: y }));
+  box.setPointerCapture = () => {};
+  fire('pointerdown', before.left + 20, before.top + 20);
+  fire('pointermove', before.left + 20 + 5000, before.top + 20 + 5000);
+  fire('pointerup', before.left + 20 + 5000, before.top + 20 + 5000);
+  await sleep(400);
+  const after = box.getBoundingClientRect();
+  ok(after.right <= 1920 && after.bottom <= 1080, 'arrastrar fuera de la pantalla: se mantiene dentro');
+  const saved = posts.filter((p) => p.fcPost === 'save').pop();
+  ok(saved && saved.data.settings.cluster.x > 0 && saved.data.settings.cluster.x <= 1, 'posición guardada normalizada (independiente de la resolución)');
+  await send({ t: 'settings', settings: saved.data.settings }, 100);
+  frame.style.width = '1280px'; frame.style.height = '720px';
+  await sleep(50);
+  w.dispatchEvent(new w.Event('resize'));
+  await sleep(300);
+  const small = box.getBoundingClientRect();
+  ok(small.right <= 1280 && small.bottom <= 720, 'al cambiar de resolución sigue dentro del área visible');
+  frame.style.width = ''; frame.style.height = '';
+  await sleep(200);
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  await sleep(100);
+  ok(q('[data-settings]').hidden && posts.some((p) => p.fcPost === 'close'), 'Escape cierra el menú y pide liberar el foco');
+
+  // Aeronave
+  await send({ t: 'profile', profile: { category: 'heli', aircraft: 'heli', throttle: true, fuel: true, engine: true, scaleKmh: 300, telltales: {} } }, 100);
+  await send({ t: 'f', s: 20, p: 0.5, a: 42, v: -1.5 }, 200);
+  ok(q('[data-telltales]').hidden || getComputedStyle(q('[data-telltales]')).display === 'none', 'aeronave: sin testigos de coche');
+  ok(!q('[data-alt]').hidden && q('[data-alt-cell="a"] [data-alt-value]').textContent === '42', 'helicóptero: altura sobre el suelo');
+  ok(q('[data-alt]').dataset.vs === 'down' && q('[data-alt-cell="b"] [data-alt-value]').textContent === '1.5', 'helicóptero: descenso 1.5 m/s');
+  ok(q('[data-gas-label]').textContent === 'POT' && q('[data-secondary]').textContent === 'VEL. SUELO', 'aeronave: potencia y velocidad respecto al suelo');
+  await send({ t: 'visible', v: false }, 100);
+  ok(App.raf === 0 && q('#fc-root').dataset.visible === 'false', 'ocultar detiene el trabajo de animación');
+
+  // Menú de administración (esquema real exportado de shared/admin.lua)
+  const fixture = await fetch('../preview/admin-fixture.json').then((r) => r.json());
+  await send({ t: 'visible', v: true }, 50);
+  await send({ t: 'adminOpen', fields: fixture.fields, keys: fixture.keys, defaults: fixture.defaults, values: fixture.defaults }, 150);
+  const adm = q('[data-admin]');
+  ok(!adm.hidden && q('[data-settings]').hidden, 'administración abierta, separada del menú personal');
+  ok(posts.some((p) => p.fcPost === 'adminOpened'), 'confirma la apertura a Lua (liberación de foco segura)');
+  ok(adm.querySelectorAll('[data-admin-tab]').length === 5, '5 secciones: cinturón, motor, luces, crucero, nitro');
+  const groups = [...adm.querySelectorAll('.fc-group h2')].map((h) => h.textContent);
+  ok(groups.some((t) => /Umbral/.test(t)) && groups.some((t) => /Fuerza/.test(t)), 'umbral y fuerza en grupos distintos');
+  ok(adm.querySelector('[data-field="Seatbelt.ejection.minSpeed"] .fc-hint').textContent.startsWith('Umbral') && adm.querySelector('[data-field="Seatbelt.ejection.horizontalForce"] .fc-hint').textContent.startsWith('Fuerza'), 'cada ajuste indica qué mide');
+  ok(/≈|unos \d/.test(adm.querySelector('[data-field="Seatbelt.ejection.window"] .fc-hint').textContent), 'la ventana muestra la deceleración equivalente en g');
+  const cats = [...adm.querySelectorAll('[data-field="Seatbelt.ejection.categories"] input:checked')].map((i) => i.dataset.option);
+  ok(cats.join(',') === 'car', 'expulsión predeterminada solo en automóviles');
+  const minRow = adm.querySelector('[data-field="Seatbelt.ejection.minSpeed"]');
+  const minInput = minRow.querySelector('[data-input]');
+  minInput.value = '120';
+  minInput.dispatchEvent(new w.Event('input', { bubbles: true }));
+  ok(minRow.dataset.modified === 'true' && minRow.querySelector('[data-out]').textContent === '120 km/h', 'editar marca el cambio y muestra el valor');
+  ok(/sin guardar/.test(q('[data-admin-status]').textContent), 'aviso de cambios sin guardar');
+  ok(Number(minInput.max) === 250 && Number(minInput.min) === 20, 'límites del esquema en el control');
+  adm.querySelector('[data-admin-action="defaults"]').click();
+  ok(adm.querySelector('[data-field="Seatbelt.ejection.minSpeed"] [data-out]').textContent === '75 km/h', 'predeterminados de la sección');
+  const minInput2 = adm.querySelector('[data-field="Seatbelt.ejection.minSpeed"] [data-input]');
+  minInput2.value = '95';
+  minInput2.dispatchEvent(new w.Event('input', { bubbles: true }));
+  adm.querySelector('[data-admin-action="save"]').click();
+  await sleep(80);
+  const savePost = posts.filter((p) => p.fcPost === 'adminSave').pop();
+  ok(savePost && savePost.data.values['Seatbelt.ejection.minSpeed'] === 95 && Object.keys(savePost.data.values).length === fixture.fields.length, 'guardar envía todos los valores a Lua/servidor');
+  await send({ t: 'adminResult', result: { ok: false, errors: [{ id: 'Nitro.power', error: 'range' }] } }, 100);
+  ok(adm.querySelector('[data-admin-tab="nitro"]').getAttribute('aria-selected') === 'true', 'error del servidor: salta a la sección del campo');
+  ok(!adm.querySelector('[data-field="Nitro.power"] [data-error]').hidden, 'error mostrado junto al campo');
+  await send({ t: 'adminResult', result: { ok: false, errors: [{ id: '*', error: 'permission' }] } }, 100);
+  ok(/permiso/.test(q('[data-admin-status]').textContent), 'rechazo por permisos visible');
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  await sleep(50);
+  ok(adm.hidden && posts.some((p) => p.fcPost === 'adminClose'), 'cancelar/Escape cierra sin guardar y libera el foco');
+
+  // Ubicación sobre el minimapa (1.4.2): mismo ancho exterior, 12 px por encima y
+  // visibilidad compartida con el velocímetro (nitro y fila inferior están dentro del conjunto).
+  const loc = q('#fc-location');
+  const cl = q('#fc-cluster');
+  const hud = q('[data-hud]');
+  const fadeOf = (el) => el.getAnimations().filter((x) => x.transitionProperty === 'opacity');
+  const finishFades = () => d.getAnimations().forEach((x) => { if (x.transitionProperty === 'opacity' || x.transitionProperty === 'visibility') x.finish(); });
+  // Opacidad efectiva (producto hasta la raíz) y visibilidad heredada.
+  const effOpacity = (el) => { let o = 1; for (let n = el; n && n !== d.body; n = n.parentElement) o *= Number(getComputedStyle(n).opacity); return o; };
+  const isShown = (el) => getComputedStyle(el).visibility === 'visible' && effOpacity(el) > 0;
+  const isHidden = (el) => getComputedStyle(el).visibility === 'hidden';
+  const edges = (m, W, H, gap, ui = 1) => {
+    const r = loc.getBoundingClientRect();
+    return { dl: r.left - m.l * W, dr: r.right - m.r * W, dg: m.t * H - r.bottom - gap * ui, w: r.width, bottom: r.bottom };
+  };
+  const mm = { l: 0.0155, r: 0.0155 + 0.150, t: 0.98 + 0.002 - 0.188888, b: 0.982 };
+  await send({ t: 'safe', safe: 0.96, mm, gap: 12 }, 50);
+  await send({ t: 'visible', v: true, loc: true, main: 'Vinewood Blvd', sub: 'Downtown Vinewood', sector: 1, bearing: 45 }, 120);
+  finishFades();
+  ok(isShown(loc) && isShown(cl), 'una sola orden («visible») muestra el velocímetro y la ubicación, ya con sus datos');
+  let e = edges(mm, 1920, 1080, 12);
+  ok(Math.abs(e.dl) < 0.5 && Math.abs(e.dr) < 0.5, `bordes izquierdo y derecho alineados con los del minimapa (${e.dl.toFixed(2)} / ${e.dr.toFixed(2)} px)`);
+  ok(Math.abs(e.w - (mm.r - mm.l) * 1920) < 0.5, 'anchura exterior igual a la del minimapa');
+  ok(Math.abs(e.dg) < 0.5 && e.bottom < mm.t * 1080, `encima del minimapa, a 12 px y sin solaparlo (${(mm.t * 1080 - e.bottom).toFixed(2)} px)`);
+  ok(loc.querySelector('[data-loc-sector]').textContent === 'NE', 'rumbo NE en español');
+  await send({ t: 'location', main: 'Calle Extremadamente Larga de Prueba del Distrito Norte Para Recortar', sub: 'Barrio con Nombre Muy Largo de Prueba' }, 80);
+  const strong = loc.querySelector('strong');
+  e = edges(mm, 1920, 1080, 12);
+  ok(strong.scrollWidth > strong.clientWidth && loc.scrollWidth <= loc.clientWidth + 1, 'nombre largo: recortado con puntos suspensivos, sin desbordar');
+  ok(Math.abs(e.dl) < 0.5 && Math.abs(e.dr) < 0.5, 'nombre largo: la barra no se ensancha');
+  ok(strong.title.startsWith('Calle Extremadamente'), 'nombre completo disponible en el título');
+  await send({ t: 'location', main: 'Pacific Ocean', sub: '' }, 80);
+  ok(loc.querySelector('.fc-loc-place span').hidden, 'sin calle: solo la zona, sin línea vacía');
+  ok(Math.abs(edges(mm, 1920, 1080, 12).dg) < 0.5, 'con una sola línea sigue a 12 px del minimapa');
+  ok(getComputedStyle(loc).animationName === 'none' && getComputedStyle(loc.querySelector('[data-loc-arrow]')).animationName === 'none', 'sin animaciones repetitivas');
+  const rotOf = () => parseFloat(loc.querySelector('[data-loc-arrow]').style.transform.match(/-?[\d.]+/)[0]);
+  await send({ t: 'location', bearing: 359 }, 30);
+  const rot1 = rotOf();
+  await send({ t: 'location', bearing: 2 }, 30);
+  const rot2 = rotOf();
+  ok(Math.abs(rot2 - rot1 - 3) < 0.01, `rumbo 359° → 2°: gira 3°, no una vuelta entera (${rot1}° → ${rot2}°)`);
+
+  // Sincronización: una sola capa con una sola transición para los dos
+  ok(cl.parentElement === hud && loc.parentElement === hud, 'velocímetro (con nitro y fila inferior) y ubicación en la misma capa');
+  await send({ t: 'visible', v: false, loc: false }, 0);
+  const [fh] = fadeOf(hud);
+  const th = fh && fh.effect.getTiming();
+  ok(fh && th.delay === 0 && th.duration === 140, `ocultar: una única transición de ${th && th.duration} ms, sin retraso`);
+  ok(fadeOf(loc).length === 0 && fadeOf(cl).length === 0, 'ni la ubicación ni el velocímetro tienen transición propia (no pueden desfasarse)');
+  finishFades();
+  ok(isHidden(loc) && isHidden(cl), 'terminada la transición: los dos ocultos');
+  // Entrar y salir rápidamente: las órdenes llegan sin esperar a que acabe la transición.
+  let syncOk = true;
+  const why = [];
+  let maxAnims = 0;
+  for (let i = 0; i < 12; i += 1) {
+    const show = i % 2 === 0;
+    w.postMessage({ t: 'visible', v: show, loc: show, main: 'Vinewood Blvd', sub: 'Downtown Vinewood' }, '*');
+    await sleep([0, 5, 20, 40, 70, 0][i % 6]);
+    maxAnims = Math.max(maxAnims, fadeOf(hud).length);
+    if (fadeOf(loc).length || fadeOf(cl).length) syncOk = false;
+    if (getComputedStyle(loc).visibility !== getComputedStyle(cl).visibility || Math.abs(effOpacity(loc) - effOpacity(cl)) > 1e-6) { syncOk = false; why.push(i + ' ' + getComputedStyle(loc).visibility + '/' + getComputedStyle(cl).visibility + ' ' + effOpacity(loc).toFixed(3) + '/' + effOpacity(cl).toFixed(3) + ' ds=' + loc.dataset.show); }
+  }
+  ok(syncOk, '12 entradas y salidas seguidas: la ubicación y el velocímetro siempre con la misma opacidad y visibilidad' + (why.length ? ' ' + why.join(' | ') : ''));
+  ok(maxAnims <= 1, 'las transiciones pendientes se sustituyen (nunca se acumulan)');
+  await sleep(20);
+  finishFades();
+  ok(isHidden(loc) && isHidden(cl), 'tras salir la última vez: ninguno se queda visible');
+  await send({ t: 'visible', v: true, loc: true }, 40);
+  finishFades();
+  ok(isShown(loc) && isShown(cl), 'al volver a entrar: los dos visibles');
+  await send({ t: 'visible', v: true, loc: false }, 40);
+  finishFades();
+  ok(isHidden(loc) && isShown(cl), 'minimapa oculto o mapa ampliado: solo se oculta la ubicación');
+  await send({ t: 'visible', v: false, loc: true }, 40);
+  finishFades();
+  ok(isHidden(loc), 'sin HUD la ubicación nunca se ve, aunque llegara marcada');
+  await send({ t: 'visible', v: true, loc: true }, 40);
+  finishFades();
+
+  // Fotogramas reales: entrar y salir rápido mientras se pinta (en un panel oculto del
+  // navegador no hay fotogramas; entonces se indica y no se cuenta como superada).
+  const sampleFrames = (n, plan) => new Promise((resolve) => {
+    const samples = [];
+    let i = 0;
+    let done = false;
+    const tick = () => {
+      if (done) return;
+      if (plan[i]) App.handle(plan[i]);
+      samples.push({ lo: effOpacity(loc).toFixed(6), co: effOpacity(cl).toFixed(6), lv: getComputedStyle(loc).visibility, cv: getComputedStyle(cl).visibility });
+      i += 1;
+      if (i < n) w.requestAnimationFrame(tick);
+      else { done = true; resolve(samples); }
+    };
+    w.requestAnimationFrame(tick);
+    setTimeout(() => { if (!done) { done = true; resolve(samples); } }, 2000);
+  });
+  const hideMsg = { t: 'visible', v: false, loc: false };
+  const showMsg = { t: 'visible', v: true, loc: true };
+  const fr = await sampleFrames(40, { 0: hideMsg, 4: showMsg, 6: hideMsg, 9: showMsg, 10: hideMsg, 20: showMsg, 30: hideMsg });
+  if (fr.length >= 40) {
+    const same = fr.every((s) => s.lo === s.co && s.lv === s.cv);
+    const mid = fr.filter((s) => s.lo !== '0.000000' && s.lo !== '1.000000').length;
+    ok(same && mid > 0, `entrar y salir rápido, ${fr.length} fotogramas reales: misma opacidad y visibilidad en cada uno (${mid} intermedios)`);
+    await sleep(400);
+    ok(isHidden(loc) && isHidden(cl), 'fotogramas reales: al terminar, sin forzar nada, los dos ocultos');
+  } else {
+    lines.push('<span class="skip">omit</span> fotogramas reales: la página no está pintando (panel oculto)');
+  }
+  App.handle(showMsg);
+  await sleep(20);
+  finishFades();
+
+  // Zona segura y resolución
+  const mm2 = { l: 0.05 - 0.0045, r: 0.05 - 0.0045 + 0.150, t: 0.95 + 0.002 - 0.188888, b: 0.952 };
+  await send({ t: 'safe', safe: 0.9, mm: mm2, gap: 12 }, 80);
+  e = edges(mm2, 1920, 1080, 12);
+  ok(Math.abs(e.dl) < 0.5 && Math.abs(e.dr) < 0.5 && Math.abs(e.dg) < 0.5, 'sigue al minimapa al cambiar la zona segura');
+  frame.style.width = '2560px'; frame.style.height = '1440px';
+  await sleep(50);
+  w.dispatchEvent(new w.Event('resize'));
+  await sleep(120);
+  e = edges(mm2, 2560, 1440, 12, 1440 / 1080);
+  ok(Math.abs(e.dl) < 0.5 && Math.abs(e.dr) < 0.5 && Math.abs(e.dg) < 0.5, 'en 1440p: mismo ancho que el minimapa y 12 px escalados');
+  frame.style.width = ''; frame.style.height = '';
+  await sleep(50);
+  w.dispatchEvent(new w.Event('resize'));
+  await sleep(100);
+  // Escala, mover, restaurar posición y desactivar desde ajustes
+  await send({ t: 'settings', settings: { unit: 'mph', accent: '#4DA3FF', cluster: { scale: 1.2 }, location: { enabled: true, scale: 1.3 } } }, 100);
+  e = edges(mm2, 1920, 1080, 12);
+  ok(Math.abs(e.dl) < 0.5 && Math.abs(e.dr) < 0.5 && Math.abs(e.dg) < 0.5 && Math.abs(loc.getBoundingClientRect().height / (loc.offsetHeight * 1.3) - 1) < 0.02, 'escala propia (130 %): más alta, mismo ancho y bordes que el minimapa');
+  await send({ t: 'openSettings' }, 120);
+  q('[data-action="edit-layout"]').click();
+  const locBefore = loc.getBoundingClientRect();
+  loc.setPointerCapture = () => {};
+  const fireL = (type, x, y) => loc.dispatchEvent(new w.PointerEvent(type, { bubbles: true, pointerId: 2, button: 0, clientX: x, clientY: y }));
+  fireL('pointerdown', locBefore.left + 10, locBefore.top + 10);
+  fireL('pointermove', locBefore.left + 110, locBefore.top - 90);
+  fireL('pointerup', locBefore.left + 110, locBefore.top - 90);
+  await sleep(350);
+  const moved = posts.filter((p) => p.fcPost === 'save').pop().data.settings.location;
+  ok(Math.abs(moved.x - 100 / 1080) < 0.005 && Math.abs(moved.y + 100 / 1080) < 0.005, 'mover: se guarda el desplazamiento respecto al minimapa');
+  q('[data-action="reset-layout"]').click();
+  await sleep(350);
+  const reset = posts.filter((p) => p.fcPost === 'save').pop().data.settings;
+  e = edges(mm2, 1920, 1080, 12);
+  ok(reset.location.x === undefined && Math.abs(e.dl) < 0.5 && Math.abs(e.dr) < 0.5 && Math.abs(e.dg) < 0.5, 'Posición original: vuelve a la nueva posición predeterminada (bordes del minimapa, 12 px)');
+  ok(reset.unit === 'mph' && reset.accent === '#4DA3FF' && reset.cluster.scale === 1.2 && reset.location.scale === 1.3 && reset.location.enabled === true, 'Posición original no borra las demás preferencias (unidades, color, escalas)');
+  const lt = q('[data-loc-toggle]');
+  lt.checked = false;
+  lt.dispatchEvent(new w.Event('change', { bubbles: true }));
+  await sleep(50);
+  finishFades();
+  ok(isHidden(loc), 'desactivar en ajustes la oculta');
+  lt.checked = true;
+  lt.dispatchEvent(new w.Event('change', { bubbles: true }));
+  await sleep(50);
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  await sleep(80);
+  await send({ t: 'visible', v: false, loc: false }, 50);
+  finishFades();
+  ok(isHidden(loc) && isHidden(cl), 'a pie (Lua lo oculta todo): ninguno visible');
+  await send({ t: 'openSettings' }, 120);
+  finishFades();
+  ok(isShown(loc), 'con los ajustes abiertos se muestra para poder colocarla aunque esté a pie');
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  await sleep(80);
+  finishFades();
+  ok(isHidden(loc) && isHidden(cl), 'al cerrar los ajustes vuelven a ocultarse juntos');
+  // Posición y tamaño predeterminados del servidor (Config.Location.default)
+  const rulesDef = { allowUnit: true, allowColor: true, allowLayout: true, allowModules: true, scaleMin: 0.8, scaleMax: 1.5, opacityMin: 0.4, maxVolume: 1, features: { nitro: true }, locationDefault: { x: 20 / 1080, y: -37 / 1080, scale: 1.02 } };
+  await send({ t: 'init', lang: 'es', strings: L10N.es, fallback: L10N.en, settings: { location: { enabled: true, scale: 1.3 } }, thresholds: { fuel: 15, engine: 35 }, rules: rulesDef }, 80);
+  await send({ t: 'visible', v: true, loc: true }, 60);
+  finishFades();
+  e = edges(mm2, 1920, 1080, 12);
+  ok(Math.abs(e.dl - 20) < 0.5 && Math.abs(e.dr - 20) < 0.5 && Math.abs(e.dg - 37) < 0.5, `sin posición guardada: la predeterminada del servidor (+20 px, 37 px más arriba) (${e.dl.toFixed(2)}, ${e.dg.toFixed(2)})`);
+  await send({ t: 'openSettings' }, 120);
+  q('[data-action="reset-loc-scale"]').click();
+  await sleep(350);
+  ok(posts.filter((p) => p.fcPost === 'save').pop().data.settings.location.scale === 1.02, 'Restaurar tamaño de la ubicación: el predeterminado del servidor (102 %)');
+  q('[data-action="edit-layout"]').click();
+  const defBefore = loc.getBoundingClientRect();
+  fireL('pointerdown', defBefore.left + 10, defBefore.top + 10);
+  fireL('pointermove', defBefore.left + 60, defBefore.top - 40);
+  fireL('pointerup', defBefore.left + 60, defBefore.top - 40);
+  await sleep(350);
+  q('[data-action="reset-layout"]').click();
+  await sleep(350);
+  e = edges(mm2, 1920, 1080, 12);
+  ok(posts.filter((p) => p.fcPost === 'save').pop().data.settings.location.x === undefined && Math.abs(e.dl - 20) < 0.5 && Math.abs(e.dg - 37) < 0.5, 'Restaurar posición: vuelve a la predeterminada del servidor');
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  await sleep(80);
+  await send({ t: 'settings', settings: {} }, 50);
+
+  lines.push(`\n${passed} correctas, ${failed} fallidas`);
+  out.innerHTML = lines.join('\n');
+  document.title = failed ? `FAIL ${failed}` : `OK ${passed}`;
+})().catch((e) => { document.getElementById('out').textContent = 'ERROR ' + e.stack; document.title = 'ERROR'; });
+</script>
+</body>
+</html>

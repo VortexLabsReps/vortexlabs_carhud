@@ -1,0 +1,239 @@
+/* Conjunto único (abajo a la derecha): nitro, velocímetro, intermitentes,
+   acelerador y fila inferior. Medidas aprobadas; identidad VortexLabs:
+   neutros en rango normal y coral solo para lo que pide atención. */
+
+.fc-cluster {
+  width: 254px;
+  color: var(--fc-fg);
+  isolation: isolate;
+  text-shadow: 0 1px 2px #000, 0 0 7px rgba(0, 0, 0, 0.7);
+  font-family: var(--fc-font-display);
+}
+
+/* Fondo oscuro difuminado detrás del reloj (asfalto claro, arena, zonas iluminadas).
+   Gradiente radial estático de bordes suaves: sin filtros ni desenfoque. */
+.fc-cluster::before {
+  content: '';
+  position: absolute;
+  top: 52px;
+  left: -26px;
+  right: -26px;
+  bottom: -28px;
+  z-index: -1;
+  pointer-events: none;
+  /* closest-side + transparente en el 100 %: la elipse llega a 0 justo en el
+     borde de la caja, así no aparecen cortes sobre fondos claros. */
+  background: radial-gradient(closest-side at 50% 50%,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.78) 45%,
+    rgba(0, 0, 0, 0.46) 72%,
+    rgba(0, 0, 0, 0.15) 88%,
+    rgba(0, 0, 0, 0) 100%);
+}
+.fc-cluster[data-nitro="false"]::before { top: -24px; }
+
+/* Segmentos (velocímetro y nitro comparten geometría) */
+.fc-arc, .fc-nitro-dial { display: block; overflow: visible; }
+.fc-arc line, .fc-nitro-dial line { stroke-linecap: round; fill: none; }
+.fc-arc-base line { stroke: rgba(0, 0, 0, 0.5); }
+
+/* ── Nitro: anillo pequeño encima, alineado a la derecha ── */
+.fc-nitro {
+  position: relative;
+  width: 112px;
+  height: 102px;
+  margin: 0 2px 2px auto;
+  isolation: isolate;
+}
+.fc-nitro::before {
+  content: '';
+  position: absolute;
+  inset: -14px -14px -8px;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.8) 20%, rgba(0, 0, 0, 0.54) 60%, rgba(0, 0, 0, 0.17) 86%, rgba(0, 0, 0, 0) 100%);
+}
+.fc-nitro-dial { width: 100%; height: 100%; }
+.fc-nitro-icon {
+  position: absolute;
+  inset: 24px 0 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vx-gray-50);
+  transition: color var(--vx-dur-fast);
+}
+.fc-nitro-icon svg { position: relative; width: 23px; height: 23px; stroke-width: 1.8; display: block; }
+/* Halo del nitro activo: gradiente, sin filtros. Color = posición de la carga en la escala. */
+.fc-nitro-icon::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--fc-nitro-glow, rgba(254, 53, 85, 0.4)), rgba(0, 0, 0, 0));
+  opacity: 0;
+  transition: opacity var(--vx-dur-fast);
+}
+.fc-nitro[data-state="active"] .fc-nitro-icon { color: var(--fc-nitro-color, var(--fc-accent)); }
+.fc-nitro[data-state="active"] .fc-nitro-icon::before { opacity: 1; }
+.fc-nitro[data-state="empty"] .fc-nitro-icon { color: var(--vx-gray-300); }
+.fc-nitro small {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--vx-gray-300);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Velocímetro ── */
+.fc-main { position: relative; width: 100%; height: 202px; }
+.fc-arc { width: 222px; height: 202px; margin: auto; }
+.fc-cruise-mark { stroke: var(--fc-accent); stroke-width: 2.4; opacity: 0; transition: opacity var(--vx-dur-base); }
+.fc-cluster[data-cruise="true"] .fc-cruise-mark { opacity: 1; }
+
+.fc-reading {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 43px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--vx-gray-300);
+}
+.fc-secondary { display: block; height: 16px; font-size: 12px; line-height: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fc-secondary[data-kind="tag"] { font-size: 10px; letter-spacing: var(--vx-tracking-label); font-weight: 600; }
+
+/* Cifra principal en la tipografía de display (Bahnschrift, incluida en Windows), tabular: no baila al cambiar de dígito. */
+.fc-speed {
+  display: block;
+  color: var(--vx-gray-50);
+  font-size: 72px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-top: 5px;
+}
+.fc-unitline { font-size: 12px; white-space: nowrap; letter-spacing: var(--vx-tracking-label); }
+.fc-unitline b { font-weight: 400; margin: 0 5px; }
+.fc-unitline em { font-size: 19px; font-weight: 600; font-style: normal; color: var(--vx-gray-50); display: inline-block; min-width: 11px; letter-spacing: 0; }
+.fc-cluster[data-has-gear="false"] [data-gear-sep],
+.fc-cluster[data-has-gear="false"] [data-gear] { display: none; }
+
+/* ── Intermitentes a ambos lados del reloj. El parpadeo se reinicia a la vez
+   en los dos (JS) para que en emergencia vayan sincronizados. ── */
+.fc-turn { position: absolute; top: 92px; display: flex; color: var(--vx-gray-300); opacity: .5; }
+.fc-turn-left { left: 0; }
+.fc-turn-right { right: 0; }
+.fc-turn svg { width: 20px; height: 20px; display: block; }
+.fc-turn[data-state="on"] { color: var(--vx-gray-50); opacity: 1; animation: fc-turn-blink .9s steps(1, end) infinite; }
+@keyframes fc-turn-blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: .22; } }
+
+/* ── Acelerador ── */
+.fc-gas { display: flex; align-items: flex-end; gap: 9px; margin: 0 24px; color: var(--vx-gray-300); font-size: 11px; letter-spacing: var(--vx-tracking-label); }
+.fc-gas > span { min-width: 22px; }
+.fc-gas > div { display: flex; align-items: flex-end; gap: 2px; height: 17px; flex: 1; min-width: 0; }
+.fc-gas b { display: block; flex: 1; min-width: 0; border-radius: 0; background: var(--fc-unlit); }
+
+/* ── Fila inferior ── */
+.fc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  margin-top: 13px;
+  min-height: 44px;
+  padding: 9px 12px;
+  background: var(--fc-plate);
+  border: 1px solid var(--fc-plate-line);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-gray-300);
+  text-shadow: none;
+  font-family: var(--fc-font);
+  clip-path: polygon(0 0, calc(100% - var(--vx-cut)) 0, 100% var(--vx-cut-y), 100% 100%, 0 100%);
+}
+.fc-tts { display: flex; align-items: center; gap: 13px; }
+.fc-tt { display: flex; align-items: center; justify-content: center; color: var(--vx-gray-300); }
+.fc-tt svg { width: 17px; height: 17px; display: block; overflow: visible; }
+.fc-belt svg, .fc-light svg { width: 18px; height: 18px; }
+.fc-divider { width: 1px; height: 22px; background: var(--vx-gray-700); flex-shrink: 0; }
+
+.fc-belt[data-state="on"] { color: var(--vx-gray-50); }
+.fc-belt[data-state="off"] { color: var(--vx-gray-300); }
+.fc-belt[data-state="warn"] { color: var(--fc-danger); animation: fc-blink 1s steps(1, end) infinite; }
+
+.fc-light[data-state="off"] { color: var(--vx-gray-300); }
+.fc-light[data-state="low"] { color: var(--fc-low); }
+.fc-light[data-state="high"] { color: var(--fc-high); }
+.fc-light .fc-beam-low, .fc-light .fc-beam-high, .fc-light .fc-lamp-off { display: none; }
+.fc-light[data-state="off"] .fc-lamp-off { display: inline; }
+.fc-light[data-state="low"] .fc-beam-low { display: inline; }
+.fc-light[data-state="high"] .fc-beam-high { display: inline; }
+
+.fc-cruise { opacity: .55; }
+.fc-cruise[data-state="on"] { opacity: 1; color: var(--vx-gray-50); }
+
+@keyframes fc-blink { 0% { opacity: 1; } 55% { opacity: .22; } }
+
+/* Aeronaves: altitud en la fila inferior en lugar de cinturón, luces y crucero */
+.fc-alt { display: flex; gap: 14px; }
+.fc-alt-cell { min-width: 0; }
+.fc-alt-cell > span { display: block; font-size: 9px; letter-spacing: 1.2px; font-weight: 500; color: var(--vx-gray-300); white-space: nowrap; }
+.fc-alt-cell strong { display: flex; align-items: baseline; gap: 3px; font-size: 15px; font-weight: 600; color: var(--vx-gray-50); font-family: var(--fc-font-display); font-variant-numeric: tabular-nums; white-space: nowrap; margin-top: 1px; }
+.fc-alt-cell i { font-style: normal; }
+.fc-alt-cell small { font-size: 10px; color: var(--vx-gray-300); font-weight: 400; }
+.fc-vs-arrow { display: none; align-self: center; width: 8px; height: 8px; color: var(--vx-gray-50); }
+.fc-vs-arrow svg { width: 8px; height: 8px; display: block; }
+.fc-alt[data-vs="up"] .fc-vs-arrow, .fc-alt[data-vs="down"] .fc-vs-arrow { display: inline-block; }
+.fc-alt[data-vs="down"] .fc-vs-arrow { transform: rotate(180deg); color: var(--fc-warn); }
+
+/* ── Ubicación sobre el minimapa ── */
+.fc-loc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box; /* el ancho exterior lo fija JS: el del minimapa */
+  padding: 8px 10px 8px calc(10px + var(--vx-mark-w) + var(--vx-slot));
+  background: var(--fc-plate);
+  border: 1px solid var(--fc-plate-line);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-gray-50);
+  font-family: var(--fc-font);
+}
+/* Barra de identidad (.vx-mark): coral, extremo a 30° y ranura de espacio negativo. */
+.fc-loc::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: -1px;
+  width: var(--vx-mark-w);
+  background: var(--fc-accent);
+  clip-path: polygon(0 0, 100% calc(var(--vx-mark-w) * var(--vx-tan30)), 100% 100%, 0 100%);
+}
+.fc-loc-dir { display: flex; flex: 0 0 29px; flex-direction: column; align-items: center; gap: 3px; color: var(--vx-gray-50); }
+.fc-loc-arrow { display: flex; width: 13px; height: 13px; transition: transform var(--vx-dur-slow) var(--vx-ease-out); }
+.fc-loc-arrow svg { width: 13px; height: 13px; display: block; }
+.fc-loc-dir span:last-child { font-size: 11px; letter-spacing: var(--vx-tracking-label); font-weight: 600; color: var(--vx-gray-300); font-family: var(--fc-font-display); }
+.fc-loc-place { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.fc-loc-place strong { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-loc-place span { font-size: 11px; color: var(--vx-gray-300); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-root[data-editing="true"] .fc-loc {
+  pointer-events: auto;
+  cursor: grab;
+  outline: 1px dashed var(--vx-coral);
+  outline-offset: 6px;
+}
+.fc-root[data-editing="true"] .fc-loc.is-dragging { cursor: grabbing; }

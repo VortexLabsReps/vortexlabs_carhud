@@ -1,0 +1,1009 @@
+/* vortexlabs_carhud · VortexLabs — archivo generado por tools/build.js; edita web/ */
+/*
+ * VortexLabs NUI — design tokens
+ * Copia este archivo dentro del recurso (y decláralo en `files` del fxmanifest).
+ * Sin dependencias remotas. Detalle de uso en references/visual-system.md.
+ *
+ * Las reglas base usan :where() (especificidad 0) para que los estilos
+ * existentes del recurso prevalezcan sin pelear con !important.
+ */
+
+:root {
+  /* ---- Paleta (no añadir colores de marca) ---- */
+  --vx-black: #000000;
+  --vx-charcoal: #0F0F0F;
+  --vx-gray-900: #18181B;
+  --vx-gray-800: #222226;
+  --vx-gray-700: #353539;
+  --vx-gray-300: #B4B4BE;
+  --vx-gray-50: #F5F5F7;
+  --vx-coral: #FE3555;
+  --vx-on-coral: #080808; /* 5.58:1 sobre coral. Nunca blanco pequeño (3.59:1) */
+
+  /* ---- Roles ---- */
+  --vx-surface-base: var(--vx-black);
+  --vx-surface-panel: rgba(15, 15, 15, 0.96);  /* carbón casi opaco sobre el juego */
+  --vx-surface-raised: var(--vx-gray-900);
+  --vx-surface-hover: var(--vx-gray-800);
+  --vx-surface-selected: var(--vx-gray-800);
+  --vx-plate: rgba(0, 0, 0, 0.62);             /* placa bajo texto de HUD */
+  --vx-scrim: rgba(0, 0, 0, 0.55);             /* velo solo para modales */
+
+  --vx-text: var(--vx-gray-50);
+  --vx-text-muted: var(--vx-gray-300);
+  --vx-text-accent: var(--vx-coral);           /* no sobre gray-800 salvo texto grande */
+
+  --vx-line: var(--vx-gray-700);               /* decorativo: 1.57:1, no delimita controles */
+  --vx-line-control: var(--vx-gray-300);       /* límites de controles: ≥ 3:1 */
+  --vx-accent: var(--vx-coral);
+
+  /* ---- Tipografía (pilas locales) ---- */
+  --vx-font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --vx-font-display: "Bahnschrift", "DIN Alternate", "Arial Narrow", "Segoe UI", sans-serif;
+  --vx-font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+
+  --vx-text-xs: 0.8125rem;  /* 13 px @1080p — mínimo */
+  --vx-text-sm: 0.875rem;   /* 14 */
+  --vx-text-md: 1rem;       /* 16 */
+  --vx-text-lg: 1.125rem;   /* 18 */
+  --vx-text-xl: 1.375rem;   /* 22 */
+  --vx-text-2xl: 1.75rem;   /* 28 */
+  --vx-text-3xl: 2.25rem;   /* 36 */
+
+  --vx-leading-text: 1.4;
+  --vx-leading-tight: 1.15;
+  --vx-weight-regular: 400;
+  --vx-weight-strong: 600;
+  --vx-tracking-label: 0.06em;
+
+  /* ---- Espaciado (base 4 px @1080p) ---- */
+  --vx-space-1: 0.25rem;  /* 4 */
+  --vx-space-2: 0.5rem;   /* 8 */
+  --vx-space-3: 0.75rem;  /* 12 */
+  --vx-space-4: 1rem;     /* 16 */
+  --vx-space-5: 1.5rem;   /* 24 */
+  --vx-space-6: 2rem;     /* 32 */
+  --vx-space-7: 3rem;     /* 48 */
+
+  /* ---- Tamaños de control ---- */
+  --vx-control-sm: 2rem;      /* objetivo clicable mínimo */
+  --vx-control-md: 2.25rem;   /* filas densas */
+  --vx-control-lg: 2.5rem;    /* menú, botón principal */
+  --vx-panel-menu: 22rem;
+  --vx-panel-nav: 15rem;
+
+  /* ---- Forma ---- */
+  --vx-radius-sm: 2px;
+  --vx-radius-md: 4px;
+  --vx-border: 1px;
+  --vx-border-strong: 3px;
+  --vx-shadow-float: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* ---- Geometría del logo: diagonales a 30° ---- */
+  --vx-tan30: 0.5774;
+  --vx-cut: 0.75rem;                                   /* recorrido horizontal del corte */
+  --vx-cut-y: calc(var(--vx-cut) * var(--vx-tan30));   /* caída vertical a 30° */
+  --vx-slot: 3px;                                      /* ranura de espacio negativo */
+  --vx-mark-w: 4px;                                    /* barra de selección */
+
+  /* ---- Foco ---- */
+  --vx-focus-width: 2px;
+  --vx-focus-offset: 2px;
+  --vx-focus-color: var(--vx-coral);
+
+  /* ---- Movimiento ---- */
+  --vx-dur-fast: 120ms;
+  --vx-dur-base: 180ms;
+  --vx-dur-slow: 220ms;
+  --vx-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --vx-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --vx-shift: 8px;
+
+  /* ---- Capas ---- */
+  --vx-z-hud: 10;
+  --vx-z-panel: 20;
+  --vx-z-modal: 30;
+  --vx-z-toast: 40;
+}
+
+/* ---- Base ---- */
+
+/* Escala con la altura: 16 px a 1080p, legible a 720p, acotado en 4K. */
+:where(html) {
+  font-size: clamp(14px, 1.4815vh, 28px);
+}
+
+/* Documento transparente: solo las superficies de la UI pintan fondo. */
+:where(html, body) {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+:where(body) {
+  color: var(--vx-text);
+  font-family: var(--vx-font-ui);
+  font-size: var(--vx-text-md);
+  line-height: var(--vx-leading-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(:focus-visible) {
+  outline: var(--vx-focus-width) solid var(--vx-focus-color);
+  outline-offset: var(--vx-focus-offset);
+}
+
+:where(:focus:not(:focus-visible)) {
+  outline: none;
+}
+
+:where(kbd) {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 var(--vx-space-1);
+  border: var(--vx-border) solid var(--vx-line);
+  border-radius: var(--vx-radius-sm);
+  color: var(--vx-text-muted);
+  font: var(--vx-weight-strong) var(--vx-text-xs) / 1.5 var(--vx-font-ui);
+  text-align: center;
+}
+
+/* ---- Utilidades ---- */
+
+.vx-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.vx-label {
+  color: var(--vx-text-muted);
+  font-size: var(--vx-text-xs);
+  font-weight: var(--vx-weight-strong);
+  letter-spacing: var(--vx-tracking-label);
+  text-transform: uppercase;
+}
+
+.vx-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Cortes a 30°. Solo en contenedores decorativos (cabecera, placa de HUD,
+ * tarjeta destacada): clip-path recorta el anillo de foco y el área clicable,
+ * así que nunca en botones, inputs ni filas enfocables.
+ */
+.vx-cut-tr {
+  clip-path: polygon(0 0, calc(100% - var(--vx-cut)) 0, 100% var(--vx-cut-y), 100% 100%, 0 100%);
+}
+
+.vx-cut-bl {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, var(--vx-cut) 100%, 0 calc(100% - var(--vx-cut-y)));
+}
+
+/*
+ * Barra de selección con extremo diagonal y ranura. Úsala junto al estado
+ * semántico (aria-selected / aria-current) y un texto o icono, no sola.
+ */
+.vx-mark {
+  position: relative;
+  padding-left: calc(var(--vx-mark-w) + var(--vx-slot) + var(--vx-space-3));
+}
+
+.vx-mark::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--vx-mark-w);
+  background: var(--vx-accent);
+  clip-path: polygon(0 0, 100% calc(var(--vx-mark-w) * var(--vx-tan30)), 100% 100%, 0 100%);
+}
+
+/* Separador con cuña coral a 30° al inicio. */
+.vx-rule-diag {
+  position: relative;
+  height: 4px;
+  border: 0;
+  margin: var(--vx-space-3) 0;
+  background: linear-gradient(var(--vx-line), var(--vx-line)) left bottom / 100% 1px no-repeat;
+}
+
+.vx-rule-diag::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1.75rem;
+  height: 4px;
+  background: var(--vx-accent);
+  clip-path: polygon(0 0, calc(100% - 4px / var(--vx-tan30)) 0, 100% 100%, 0 100%);
+}
+
+/* ---- Movimiento reducido ---- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --vx-dur-fast: 0ms;
+    --vx-dur-base: 0ms;
+    --vx-dur-slow: 0ms;
+    --vx-shift: 0px;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* vortexlabs_carhud · VortexLabs — base. Paleta, tipografía y geometría: 00-0-vortexlabs-tokens.css */
+
+:root {
+  /* HUD: roles sobre la paleta VortexLabs (negro y carbón dominan; coral = atención) */
+  --fc-accent: var(--vx-coral);   /* el jugador puede cambiarlo en /carhud */
+  --fc-fg: var(--vx-gray-50);
+  --fc-muted: var(--vx-gray-300);
+  --fc-track: var(--vx-gray-700);
+  --fc-surface: var(--vx-charcoal);
+  --fc-plate: rgba(15, 15, 15, 0.92);       /* placa de la fila inferior, ubicación y avisos */
+  --fc-plate-line: var(--vx-gray-700);
+  /* Semánticos establecidos del recurso (se conservan): aviso ámbar, luces cortas
+     verdes y largas azules como en el salpicadero; el peligro pasa a coral. */
+  --fc-warn: #ffbb72;
+  --fc-danger: var(--vx-coral);
+  --fc-off: var(--vx-gray-300);
+  --fc-low: #61d59a;
+  --fc-high: #6aaaff;
+  --fc-accent-soft: rgba(254, 53, 85, 0.7);
+  --fc-accent-glow: rgba(254, 53, 85, 0.38);
+  --fc-unlit: #4a4a50;  /* segmento apagado: legible sobre fondos claros y oscuros */
+  --fc-ui: 1;
+  --fc-font: var(--vx-font-ui);
+  --fc-font-display: var(--vx-font-display);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: var(--fc-font);
+  color: var(--fc-fg);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+[hidden] { display: none !important; }
+
+.fc-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Una sola transición de visibilidad para todo el HUD: la capa .fc-hud contiene el
+   velocímetro (con nitro y fila inferior) y la ubicación, y solo ella se funde.
+   Al ser un único elemento, todos aparecen y desaparecen en el mismo fotograma,
+   con la misma duración y curva y sin retraso. La decide un único atributo
+   (data-visible en la raíz); si cambia a mitad, la transición se invierte desde
+   donde esté, sin temporizadores. */
+:root { --fc-fade: 140ms; --fc-fade-ease: cubic-bezier(0.2, 0, 0, 1); }
+
+.fc-hud {
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--fc-fade) var(--fc-fade-ease), visibility var(--fc-fade) var(--fc-fade-ease);
+}
+
+.fc-root[data-visible="false"] .fc-hud { opacity: 0; visibility: hidden; }
+
+/* Opacidad elegida por el jugador (sin transición propia). */
+.fc-module-box { opacity: var(--fc-opacity, 1); }
+
+/* Ocultación propia de la ubicación (minimapa oculto, desactivada): inmediata, como
+   el minimapa. Hereda la visibilidad de la capa del HUD en los demás casos. */
+.fc-loc[data-show="false"] { visibility: hidden; }
+
+/* Cada módulo se posiciona por JS (traslación + escala), siempre dentro de la zona segura. */
+.fc-module-box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.fc-root[data-editing="true"] .fc-module-box {
+  pointer-events: auto;
+  cursor: grab;
+  outline: 1px dashed var(--fc-accent-soft);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
+.fc-root[data-editing="true"] .fc-module-box.is-dragging { cursor: grabbing; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* Conjunto único (abajo a la derecha): nitro, velocímetro, intermitentes,
+   acelerador y fila inferior. Medidas aprobadas; identidad VortexLabs:
+   neutros en rango normal y coral solo para lo que pide atención. */
+
+.fc-cluster {
+  width: 254px;
+  color: var(--fc-fg);
+  isolation: isolate;
+  text-shadow: 0 1px 2px #000, 0 0 7px rgba(0, 0, 0, 0.7);
+  font-family: var(--fc-font-display);
+}
+
+/* Fondo oscuro difuminado detrás del reloj (asfalto claro, arena, zonas iluminadas).
+   Gradiente radial estático de bordes suaves: sin filtros ni desenfoque. */
+.fc-cluster::before {
+  content: '';
+  position: absolute;
+  top: 52px;
+  left: -26px;
+  right: -26px;
+  bottom: -28px;
+  z-index: -1;
+  pointer-events: none;
+  /* closest-side + transparente en el 100 %: la elipse llega a 0 justo en el
+     borde de la caja, así no aparecen cortes sobre fondos claros. */
+  background: radial-gradient(closest-side at 50% 50%,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.78) 45%,
+    rgba(0, 0, 0, 0.46) 72%,
+    rgba(0, 0, 0, 0.15) 88%,
+    rgba(0, 0, 0, 0) 100%);
+}
+.fc-cluster[data-nitro="false"]::before { top: -24px; }
+
+/* Segmentos (velocímetro y nitro comparten geometría) */
+.fc-arc, .fc-nitro-dial { display: block; overflow: visible; }
+.fc-arc line, .fc-nitro-dial line { stroke-linecap: round; fill: none; }
+.fc-arc-base line { stroke: rgba(0, 0, 0, 0.5); }
+
+/* ── Nitro: anillo pequeño encima, alineado a la derecha ── */
+.fc-nitro {
+  position: relative;
+  width: 112px;
+  height: 102px;
+  margin: 0 2px 2px auto;
+  isolation: isolate;
+}
+.fc-nitro::before {
+  content: '';
+  position: absolute;
+  inset: -14px -14px -8px;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.8) 20%, rgba(0, 0, 0, 0.54) 60%, rgba(0, 0, 0, 0.17) 86%, rgba(0, 0, 0, 0) 100%);
+}
+.fc-nitro-dial { width: 100%; height: 100%; }
+.fc-nitro-icon {
+  position: absolute;
+  inset: 24px 0 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vx-gray-50);
+  transition: color var(--vx-dur-fast);
+}
+.fc-nitro-icon svg { position: relative; width: 23px; height: 23px; stroke-width: 1.8; display: block; }
+/* Halo del nitro activo: gradiente, sin filtros. Color = posición de la carga en la escala. */
+.fc-nitro-icon::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--fc-nitro-glow, rgba(254, 53, 85, 0.4)), rgba(0, 0, 0, 0));
+  opacity: 0;
+  transition: opacity var(--vx-dur-fast);
+}
+.fc-nitro[data-state="active"] .fc-nitro-icon { color: var(--fc-nitro-color, var(--fc-accent)); }
+.fc-nitro[data-state="active"] .fc-nitro-icon::before { opacity: 1; }
+.fc-nitro[data-state="empty"] .fc-nitro-icon { color: var(--vx-gray-300); }
+.fc-nitro small {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--vx-gray-300);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Velocímetro ── */
+.fc-main { position: relative; width: 100%; height: 202px; }
+.fc-arc { width: 222px; height: 202px; margin: auto; }
+.fc-cruise-mark { stroke: var(--fc-accent); stroke-width: 2.4; opacity: 0; transition: opacity var(--vx-dur-base); }
+.fc-cluster[data-cruise="true"] .fc-cruise-mark { opacity: 1; }
+
+.fc-reading {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 43px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--vx-gray-300);
+}
+.fc-secondary { display: block; height: 16px; font-size: 12px; line-height: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fc-secondary[data-kind="tag"] { font-size: 10px; letter-spacing: var(--vx-tracking-label); font-weight: 600; }
+
+/* Cifra principal en la tipografía de display (Bahnschrift, incluida en Windows), tabular: no baila al cambiar de dígito. */
+.fc-speed {
+  display: block;
+  color: var(--vx-gray-50);
+  font-size: 72px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-top: 5px;
+}
+.fc-unitline { font-size: 12px; white-space: nowrap; letter-spacing: var(--vx-tracking-label); }
+.fc-unitline b { font-weight: 400; margin: 0 5px; }
+.fc-unitline em { font-size: 19px; font-weight: 600; font-style: normal; color: var(--vx-gray-50); display: inline-block; min-width: 11px; letter-spacing: 0; }
+.fc-cluster[data-has-gear="false"] [data-gear-sep],
+.fc-cluster[data-has-gear="false"] [data-gear] { display: none; }
+
+/* ── Intermitentes a ambos lados del reloj. El parpadeo se reinicia a la vez
+   en los dos (JS) para que en emergencia vayan sincronizados. ── */
+.fc-turn { position: absolute; top: 92px; display: flex; color: var(--vx-gray-300); opacity: .5; }
+.fc-turn-left { left: 0; }
+.fc-turn-right { right: 0; }
+.fc-turn svg { width: 20px; height: 20px; display: block; }
+.fc-turn[data-state="on"] { color: var(--vx-gray-50); opacity: 1; animation: fc-turn-blink .9s steps(1, end) infinite; }
+@keyframes fc-turn-blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: .22; } }
+
+/* ── Acelerador ── */
+.fc-gas { display: flex; align-items: flex-end; gap: 9px; margin: 0 24px; color: var(--vx-gray-300); font-size: 11px; letter-spacing: var(--vx-tracking-label); }
+.fc-gas > span { min-width: 22px; }
+.fc-gas > div { display: flex; align-items: flex-end; gap: 2px; height: 17px; flex: 1; min-width: 0; }
+.fc-gas b { display: block; flex: 1; min-width: 0; border-radius: 0; background: var(--fc-unlit); }
+
+/* ── Fila inferior ── */
+.fc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  margin-top: 13px;
+  min-height: 44px;
+  padding: 9px 12px;
+  background: var(--fc-plate);
+  border: 1px solid var(--fc-plate-line);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-gray-300);
+  text-shadow: none;
+  font-family: var(--fc-font);
+  clip-path: polygon(0 0, calc(100% - var(--vx-cut)) 0, 100% var(--vx-cut-y), 100% 100%, 0 100%);
+}
+.fc-tts { display: flex; align-items: center; gap: 13px; }
+.fc-tt { display: flex; align-items: center; justify-content: center; color: var(--vx-gray-300); }
+.fc-tt svg { width: 17px; height: 17px; display: block; overflow: visible; }
+.fc-belt svg, .fc-light svg { width: 18px; height: 18px; }
+.fc-divider { width: 1px; height: 22px; background: var(--vx-gray-700); flex-shrink: 0; }
+
+.fc-belt[data-state="on"] { color: var(--vx-gray-50); }
+.fc-belt[data-state="off"] { color: var(--vx-gray-300); }
+.fc-belt[data-state="warn"] { color: var(--fc-danger); animation: fc-blink 1s steps(1, end) infinite; }
+
+.fc-light[data-state="off"] { color: var(--vx-gray-300); }
+.fc-light[data-state="low"] { color: var(--fc-low); }
+.fc-light[data-state="high"] { color: var(--fc-high); }
+.fc-light .fc-beam-low, .fc-light .fc-beam-high, .fc-light .fc-lamp-off { display: none; }
+.fc-light[data-state="off"] .fc-lamp-off { display: inline; }
+.fc-light[data-state="low"] .fc-beam-low { display: inline; }
+.fc-light[data-state="high"] .fc-beam-high { display: inline; }
+
+.fc-cruise { opacity: .55; }
+.fc-cruise[data-state="on"] { opacity: 1; color: var(--vx-gray-50); }
+
+@keyframes fc-blink { 0% { opacity: 1; } 55% { opacity: .22; } }
+
+/* Aeronaves: altitud en la fila inferior en lugar de cinturón, luces y crucero */
+.fc-alt { display: flex; gap: 14px; }
+.fc-alt-cell { min-width: 0; }
+.fc-alt-cell > span { display: block; font-size: 9px; letter-spacing: 1.2px; font-weight: 500; color: var(--vx-gray-300); white-space: nowrap; }
+.fc-alt-cell strong { display: flex; align-items: baseline; gap: 3px; font-size: 15px; font-weight: 600; color: var(--vx-gray-50); font-family: var(--fc-font-display); font-variant-numeric: tabular-nums; white-space: nowrap; margin-top: 1px; }
+.fc-alt-cell i { font-style: normal; }
+.fc-alt-cell small { font-size: 10px; color: var(--vx-gray-300); font-weight: 400; }
+.fc-vs-arrow { display: none; align-self: center; width: 8px; height: 8px; color: var(--vx-gray-50); }
+.fc-vs-arrow svg { width: 8px; height: 8px; display: block; }
+.fc-alt[data-vs="up"] .fc-vs-arrow, .fc-alt[data-vs="down"] .fc-vs-arrow { display: inline-block; }
+.fc-alt[data-vs="down"] .fc-vs-arrow { transform: rotate(180deg); color: var(--fc-warn); }
+
+/* ── Ubicación sobre el minimapa ── */
+.fc-loc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box; /* el ancho exterior lo fija JS: el del minimapa */
+  padding: 8px 10px 8px calc(10px + var(--vx-mark-w) + var(--vx-slot));
+  background: var(--fc-plate);
+  border: 1px solid var(--fc-plate-line);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-gray-50);
+  font-family: var(--fc-font);
+}
+/* Barra de identidad (.vx-mark): coral, extremo a 30° y ranura de espacio negativo. */
+.fc-loc::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: -1px;
+  width: var(--vx-mark-w);
+  background: var(--fc-accent);
+  clip-path: polygon(0 0, 100% calc(var(--vx-mark-w) * var(--vx-tan30)), 100% 100%, 0 100%);
+}
+.fc-loc-dir { display: flex; flex: 0 0 29px; flex-direction: column; align-items: center; gap: 3px; color: var(--vx-gray-50); }
+.fc-loc-arrow { display: flex; width: 13px; height: 13px; transition: transform var(--vx-dur-slow) var(--vx-ease-out); }
+.fc-loc-arrow svg { width: 13px; height: 13px; display: block; }
+.fc-loc-dir span:last-child { font-size: 11px; letter-spacing: var(--vx-tracking-label); font-weight: 600; color: var(--vx-gray-300); font-family: var(--fc-font-display); }
+.fc-loc-place { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.fc-loc-place strong { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-loc-place span { font-size: 11px; color: var(--vx-gray-300); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-root[data-editing="true"] .fc-loc {
+  pointer-events: auto;
+  cursor: grab;
+  outline: 1px dashed var(--vx-coral);
+  outline-offset: 6px;
+}
+.fc-root[data-editing="true"] .fc-loc.is-dragging { cursor: grabbing; }
+
+/* Combustible y motor (fila inferior) y avisos. */
+
+.fc-mini { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 30px; }
+.fc-mini-icon { display: flex; color: var(--vx-gray-300); transition: color var(--vx-dur-base); }
+.fc-mini-icon svg { width: 15px; height: 15px; stroke-width: 1.7; display: block; }
+.fc-mini-track { width: 29px; height: 2px; background: var(--vx-gray-700); border-radius: 0; overflow: hidden; }
+.fc-mini-track b { display: block; width: 100%; height: 100%; background: var(--vx-gray-50); transform-origin: 0 50%; transform: scaleX(0); transition: background-color var(--vx-dur-base); }
+.fc-mini small { font-size: 11px; color: var(--vx-gray-300); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fc-mini small small { font-size: 10px; margin-left: 1px; }
+
+/* Porcentajes ocultos por defecto (se activan en ajustes) */
+.fc-root[data-values="false"] .fc-mini small,
+.fc-root[data-values="false"] .fc-nitro small { display: none; }
+
+.fc-mini[data-warn="true"] .fc-mini-icon,
+.fc-mini[data-warn="true"] small { color: var(--fc-warn); }
+.fc-mini[data-warn="true"] .fc-mini-track b { background: var(--fc-warn); }
+.fc-mini[data-nodata="true"] { opacity: .4; }
+.fc-mini[data-running="false"] .fc-mini-icon { opacity: .55; } /* motor parado: atenuado, conserva el color de su salud */
+
+/* Avisos: encima del conjunto, alineados a la derecha */
+.fc-notice {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  max-width: 320px;
+  background: var(--fc-plate);
+  border: 1px solid var(--fc-plate-line);
+  border-right: var(--vx-border-strong) solid var(--fc-warn);
+  color: var(--fc-warn);
+  padding: 8px 12px;
+  font: var(--vx-weight-strong) 11px var(--fc-font);
+  letter-spacing: .02em;
+  text-align: right;
+  white-space: nowrap;
+  border-radius: var(--vx-radius-sm);
+  text-shadow: none;
+  animation: fc-notice-in var(--vx-dur-base) var(--vx-ease-out);
+}
+/* El tipo se distingue también por la forma: barra lateral del color del aviso. */
+.fc-notice[data-kind="info"] { color: var(--fc-fg); border-right-color: var(--vx-gray-300); }
+.fc-notice[data-kind="danger"] { color: var(--fc-danger); border-right-color: var(--fc-danger); }
+@keyframes fc-notice-in { from { opacity: 0; transform: translateY(4px); } }
+
+/* Menús de ajustes y administración · identidad VortexLabs: carbón casi opaco,
+   grises neutros y coral solo para la acción principal, la selección y el foco.
+   Sin desenfoque (ver README). Medidas en px: el panel se escala con --fc-ui. */
+
+.fc-settings-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.fc-root[data-editing="true"] .fc-settings-layer { pointer-events: none; }
+.fc-root[data-editing="true"] .fc-panel { pointer-events: auto; }
+
+.fc-panel {
+  position: absolute;
+  top: 6vh;
+  left: 50%;
+  width: 404px;
+  /* Nunca más ancho ni más alto que la pantalla (el panel se escala con --fc-ui). */
+  max-width: calc((100vw - 32px) / var(--fc-ui));
+  max-height: calc(64vh / var(--fc-ui));
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-50%) scale(var(--fc-ui));
+  transform-origin: 50% 0;
+  background: var(--vx-surface-panel);
+  border: 1px solid var(--vx-line);
+  border-radius: var(--vx-radius-md);
+  box-shadow: var(--vx-shadow-float);
+  color: var(--vx-text);
+  font-family: var(--fc-font);
+  animation: fc-panel-in var(--vx-dur-base) var(--vx-ease-out);
+}
+
+@keyframes fc-panel-in { from { opacity: 0; transform: translateX(-50%) translateY(calc(var(--vx-shift) * -1)) scale(var(--fc-ui)); } }
+
+/* Cabecera: separador con cuña coral a 30° (gesto del logo) en lugar de una línea plana. */
+.fc-panel-head {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 16px;
+}
+.fc-panel-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(var(--vx-line), var(--vx-line)) left bottom / 100% 1px no-repeat;
+}
+.fc-panel-head::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 28px;
+  height: 4px;
+  z-index: 1;
+  background: var(--vx-coral);
+  clip-path: polygon(0 0, calc(100% - 4px / var(--vx-tan30)) 0, 100% 100%, 0 100%);
+}
+.fc-panel-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.fc-logo { flex: none; width: 36px; height: 36px; aspect-ratio: 1; display: block; border-radius: var(--vx-radius-sm); }
+
+.fc-brand {
+  display: block;
+  font-size: 11px;
+  font-weight: var(--vx-weight-strong);
+  letter-spacing: var(--vx-tracking-label);
+  text-transform: uppercase;
+  color: var(--vx-text-muted);
+}
+
+.fc-panel h1 {
+  margin: 4px 0 0;
+  font: var(--vx-weight-strong) 20px/var(--vx-leading-tight) var(--fc-font-display);
+  letter-spacing: 0;
+}
+
+.fc-panel-head, .fc-panel-foot, .fc-tabs, .fc-signature, .fc-admin-status { flex: none; }
+/* min-height: 0: sin él, un hijo flex con overflow no se encoge y empuja el pie fuera. */
+.fc-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 6px 20px 8px; }
+/* El CEF de FiveM pinta barras clásicas con flechas: se dejan finas y sin botones. */
+.fc-panel ::-webkit-scrollbar { width: 6px; height: 6px; }
+.fc-panel ::-webkit-scrollbar-track { background: transparent; }
+.fc-panel ::-webkit-scrollbar-thumb { background: var(--vx-gray-700); border-radius: var(--vx-radius-sm); }
+.fc-panel ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+
+.fc-group { padding: 14px 0; }
+.fc-group + .fc-group { border-top: 1px solid var(--vx-line); }
+.fc-group h2 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: var(--vx-weight-strong);
+  letter-spacing: var(--vx-tracking-label);
+  text-transform: uppercase;
+  color: var(--vx-text-muted);
+}
+
+/* Selector segmentado: el seleccionado en coral con texto oscuro (5.58:1). */
+.fc-segmented { display: inline-flex; padding: 3px; gap: 3px; background: var(--vx-gray-900); border: 1px solid var(--vx-line); border-radius: var(--vx-radius-md); }
+.fc-segmented button {
+  min-width: 74px;
+  min-height: 30px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--vx-radius-sm);
+  background: transparent;
+  color: var(--vx-text-muted);
+  font: var(--vx-weight-strong) 12px var(--fc-font);
+  letter-spacing: var(--vx-tracking-label);
+  cursor: pointer;
+  transition: background var(--vx-dur-fast), color var(--vx-dur-fast);
+}
+.fc-segmented button:hover { background: var(--vx-gray-800); color: var(--vx-text); }
+.fc-segmented button[aria-checked="true"] { background: var(--vx-coral); color: var(--vx-on-coral); }
+
+.fc-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.fc-swatch {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: var(--vx-radius-sm);
+  border: 2px solid transparent;
+  background: var(--sw);
+  box-shadow: inset 0 0 0 2px var(--vx-charcoal);
+  cursor: pointer;
+}
+.fc-swatch[aria-pressed="true"] { border-color: var(--vx-gray-50); }
+
+.fc-hex {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 0 10px;
+  height: 32px;
+  border-radius: var(--vx-radius-sm);
+  border: 1px solid var(--vx-line-control);
+  background: var(--vx-gray-900);
+  color: var(--vx-text-muted);
+  font-size: 13px;
+}
+.fc-hex input {
+  width: 72px;
+  margin-left: 4px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--vx-text);
+  font: var(--vx-weight-strong) 13px var(--vx-font-mono);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.fc-hex:focus-within { outline: var(--vx-focus-width) solid var(--vx-focus-color); outline-offset: var(--vx-focus-offset); }
+.fc-hex[data-invalid="true"] { border-color: var(--vx-coral); border-left-width: var(--vx-border-strong); }
+
+.fc-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; }
+
+.fc-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 13px;
+  color: var(--vx-text);
+  cursor: pointer;
+}
+.fc-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+/* Interruptor: el límite usa gris 300 (≥ 3:1); activado, coral con mando oscuro. */
+.fc-toggle i {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 17px;
+  border-radius: 9px;
+  border: 1px solid var(--vx-line-control);
+  background: var(--vx-gray-900);
+  transition: background var(--vx-dur-fast), border-color var(--vx-dur-fast);
+}
+.fc-toggle i::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--vx-gray-300);
+  transition: transform var(--vx-dur-fast);
+}
+.fc-toggle input:checked + i { background: var(--vx-coral); border-color: var(--vx-coral); }
+.fc-toggle input:checked + i::after { transform: translateX(13px); background: var(--vx-on-coral); }
+.fc-toggle input:focus-visible + i { outline: var(--vx-focus-width) solid var(--vx-focus-color); outline-offset: var(--vx-focus-offset); }
+
+.fc-range-row { display: flex; align-items: center; gap: 12px; min-height: 34px; }
+.fc-range-label { width: 142px; flex: none; font-size: 13px; }
+.fc-range-row output { width: 40px; flex: none; text-align: right; font-size: 12px; color: var(--vx-text-muted); font-variant-numeric: tabular-nums; }
+
+input[type="range"] { flex: 1; min-width: 0; height: 17px; margin: 0; background: transparent; -webkit-appearance: none; cursor: pointer; }
+input[type="range"]::-webkit-slider-runnable-track { height: 3px; border-radius: 0; background: linear-gradient(90deg, var(--vx-coral) var(--fill, 50%), var(--vx-gray-300) var(--fill, 50%)); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; margin-top: -5px; border-radius: var(--vx-radius-sm); background: var(--vx-gray-50); border: 0; }
+input[type="range"]:focus { outline: none; }
+input[type="range"]:focus-visible::-webkit-slider-thumb { outline: var(--vx-focus-width) solid var(--vx-focus-color); outline-offset: var(--vx-focus-offset); }
+
+.fc-reset-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--vx-line-control);
+  border-radius: var(--vx-radius-sm);
+  background: transparent;
+  color: var(--vx-text-muted);
+  font: var(--vx-weight-strong) 14px var(--fc-font);
+  cursor: pointer;
+  transition: background var(--vx-dur-fast), color var(--vx-dur-fast);
+}
+.fc-reset-btn:hover { color: var(--vx-text); background: var(--vx-gray-800); }
+
+.fc-row-buttons { display: flex; gap: 8px; margin-top: 8px; }
+.fc-hint { margin: 10px 0 0; font-size: 12px; line-height: var(--vx-leading-text); color: var(--vx-text-muted); }
+
+/* Acciones: principal coral (una por contexto), secundaria con contorno, destructiva con contorno coral. */
+.fc-btn-primary, .fc-btn-ghost {
+  min-height: 34px;
+  border-radius: var(--vx-radius-md);
+  padding: 7px 16px;
+  font: var(--vx-weight-strong) 13px var(--fc-font);
+  cursor: pointer;
+  transition: background var(--vx-dur-fast), color var(--vx-dur-fast), border-color var(--vx-dur-fast);
+}
+.fc-btn-primary { background: var(--vx-coral); color: var(--vx-on-coral); border: 1px solid var(--vx-coral); }
+.fc-btn-primary:hover { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35); }
+.fc-btn-ghost { background: transparent; color: var(--vx-text); border: 1px solid var(--vx-line-control); }
+.fc-btn-ghost:hover { background: var(--vx-gray-800); }
+.fc-btn-ghost[aria-pressed="true"] { background: var(--vx-gray-800); border-color: var(--vx-coral); }
+.fc-btn-ghost.fc-danger { color: var(--vx-coral); border-color: var(--vx-coral); }
+.fc-btn-ghost.fc-danger:hover { background: var(--vx-gray-800); }
+button:focus-visible { outline: var(--vx-focus-width) solid var(--vx-focus-color); outline-offset: var(--vx-focus-offset); }
+
+.fc-icon-btn {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--vx-line-control);
+  border-radius: var(--vx-radius-sm);
+  background: transparent;
+  color: var(--vx-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--vx-dur-fast), color var(--vx-dur-fast);
+}
+.fc-icon-btn:hover { color: var(--vx-text); background: var(--vx-gray-800); }
+.fc-icon-btn svg { width: 14px; height: 14px; }
+
+.fc-panel-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--vx-line);
+}
+
+.fc-signature {
+  padding: 0 20px 12px;
+  font-size: 11px;
+  letter-spacing: var(--vx-tracking-label);
+  color: var(--vx-text-muted);
+  text-align: right;
+}
+
+/* ── Administración (/carhudadmin) ── */
+.fc-admin { width: 540px; top: 4vh; max-height: calc(88vh / var(--fc-ui)); }
+/* Pestañas sin desplazamiento: si no caben, pasan a otra línea (nunca se recortan). */
+.fc-tabs { display: flex; flex-wrap: wrap; gap: 0 4px; padding: 8px 16px 0; border-bottom: 1px solid var(--vx-line); overflow: hidden; }
+.fc-tabs button {
+  position: relative;
+  flex: none;
+  margin-bottom: -1px;
+  padding: 9px 10px 8px;
+  line-height: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--vx-text-muted);
+  font: var(--vx-weight-strong) 12px var(--fc-font);
+  letter-spacing: .02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--vx-dur-fast), color var(--vx-dur-fast);
+}
+.fc-tabs button:hover { color: var(--vx-text); background: var(--vx-gray-800); }
+/* Pestaña activa: barra coral con extremo a 30° (además de aria-selected y texto claro). */
+.fc-tabs button[aria-selected="true"] { color: var(--vx-text); }
+.fc-tabs button[aria-selected="true"]::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--vx-coral);
+  clip-path: polygon(0 0, calc(100% - 3px / var(--vx-tan30)) 0, 100% 100%, 0 100%);
+}
+.fc-admin-field { padding: 6px 0 8px; }
+.fc-admin-field + .fc-admin-field { border-top: 1px dashed var(--vx-gray-800); }
+.fc-admin-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--vx-text); margin-bottom: 4px; }
+.fc-admin-field .fc-toggle .fc-admin-label { margin-bottom: 0; }
+/* Valor distinto del predeterminado: rombo coral (forma, no solo color) + título del campo. */
+.fc-admin-dot { display: none; width: 7px; height: 7px; background: var(--vx-coral); transform: rotate(45deg); }
+.fc-admin-field[data-modified="true"] .fc-admin-dot { display: inline-block; }
+.fc-admin-field .fc-range-row output { width: 76px; }
+.fc-admin-field .fc-hint { margin: 2px 0 0; font-size: 12px; line-height: 1.45; }
+.fc-admin-error { margin: 4px 0 0; padding-left: 8px; border-left: var(--vx-border-strong) solid var(--vx-coral); font-size: 12px; color: var(--vx-coral); }
+.fc-admin-error::before { content: '⚠ '; }
+.fc-select, .fc-text {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--vx-radius-sm);
+  border: 1px solid var(--vx-line-control);
+  background: var(--vx-gray-900);
+  color: var(--vx-text);
+  font: 13px var(--fc-font);
+}
+.fc-text { font-family: var(--vx-font-mono); }
+.fc-select { width: 140px; }
+.fc-select option { background: var(--vx-charcoal); }
+.fc-select:focus, .fc-text:focus { outline: none; }
+.fc-select:focus-visible, .fc-text:focus-visible { outline: var(--vx-focus-width) solid var(--vx-focus-color); outline-offset: var(--vx-focus-offset); }
+.fc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fc-chip { position: relative; cursor: pointer; }
+.fc-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.fc-chip span {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: var(--vx-radius-sm);
+  border: 1px solid var(--vx-line-control);
+  color: var(--vx-text-muted);
+  font-size: 12px;
+  transition: background var(--vx-dur-fast), color var(--vx-dur-fast);
+}
+.fc-chip:hover span { background: var(--vx-gray-800); color: var(--vx-text); }
+.fc-chip input:checked + span { background: var(--vx-coral); color: var(--vx-on-coral); border-color: var(--vx-coral); }
+.fc-chip input:checked + span::before { content: '✓ '; }
+.fc-chip input:focus-visible + span { outline: var(--vx-focus-width) solid var(--vx-focus-color); outline-offset: var(--vx-focus-offset); }
+.fc-admin-status { margin: 0; padding: 8px 20px; font-size: 12px; border-top: 1px solid var(--vx-line); color: var(--vx-text-muted); }
+.fc-admin-status[data-kind="ok"] { color: var(--vx-text); box-shadow: inset var(--vx-border-strong) 0 0 var(--vx-gray-50); }
+.fc-admin-status[data-kind="ok"]::before { content: '✓ '; }
+.fc-admin-status[data-kind="error"] { color: var(--vx-coral); box-shadow: inset var(--vx-border-strong) 0 0 var(--vx-coral); }
+.fc-admin-status[data-kind="error"]::before { content: '⚠ '; }
+
+/* ── Diagnóstico de expulsión (/carhudcrash) ── */
+.fc-diag {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 300px;
+  padding: 10px 12px;
+  background: var(--vx-surface-panel);
+  border: 1px solid var(--vx-line);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-text);
+  font: 400 11px/1.45 var(--fc-font);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  transform: scale(var(--fc-ui));
+  transform-origin: 0 0;
+}
+.fc-diag b { display: block; margin-bottom: 4px; font-size: 11px; letter-spacing: var(--vx-tracking-label); font-weight: var(--vx-weight-strong); color: var(--vx-text-muted); }
+.fc-diag p { margin: 2px 0; }
+.fc-diag i { display: inline-block; width: 14px; font-style: normal; font-weight: 600; }
+.fc-diag i.ok { color: var(--vx-gray-50); }
+.fc-diag i.no { color: var(--vx-coral); }
+.fc-diag-samples span { display: block; padding-left: 10px; color: var(--vx-text-muted); }
+.fc-diag-dec { margin-top: 6px !important; padding-top: 6px; border-top: 1px solid var(--vx-line); color: var(--fc-warn); }
+.fc-diag-dec.hit { color: var(--vx-coral); font-weight: 600; }

@@ -1,0 +1,15 @@
+{
+  "name": "vortexlabs_carhud-dev",
+  "private": true,
+  "description": "Banco de pruebas fuera del juego de vortexlabs_carhud (FiveM no lo carga)",
+  "devDependencies": {
+    "fengari": "0.1.4",
+    "luaparse": "0.3.1"
+  },
+  "scripts": {
+    "check": "node check.js",
+    "test": "node run.js test_shared.lua && node run.js test_client.lua && node run.js test_server.lua && node run.js test_admin.lua && node run.js test_admin_persist.lua && node run.js test_admin_client.lua && node run.js test_crash_client.lua && node run.js test_location.lua",
+    "build": "node ../tools/build.js",
+    "preview": "node ../tools/preview.js"
+  }
+}

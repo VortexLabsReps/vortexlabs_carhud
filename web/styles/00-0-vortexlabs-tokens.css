@@ -1,0 +1,246 @@
+/*
+ * VortexLabs NUI — design tokens
+ * Copia este archivo dentro del recurso (y decláralo en `files` del fxmanifest).
+ * Sin dependencias remotas. Detalle de uso en references/visual-system.md.
+ *
+ * Las reglas base usan :where() (especificidad 0) para que los estilos
+ * existentes del recurso prevalezcan sin pelear con !important.
+ */
+
+:root {
+  /* ---- Paleta (no añadir colores de marca) ---- */
+  --vx-black: #000000;
+  --vx-charcoal: #0F0F0F;
+  --vx-gray-900: #18181B;
+  --vx-gray-800: #222226;
+  --vx-gray-700: #353539;
+  --vx-gray-300: #B4B4BE;
+  --vx-gray-50: #F5F5F7;
+  --vx-coral: #FE3555;
+  --vx-on-coral: #080808; /* 5.58:1 sobre coral. Nunca blanco pequeño (3.59:1) */
+
+  /* ---- Roles ---- */
+  --vx-surface-base: var(--vx-black);
+  --vx-surface-panel: rgba(15, 15, 15, 0.96);  /* carbón casi opaco sobre el juego */
+  --vx-surface-raised: var(--vx-gray-900);
+  --vx-surface-hover: var(--vx-gray-800);
+  --vx-surface-selected: var(--vx-gray-800);
+  --vx-plate: rgba(0, 0, 0, 0.62);             /* placa bajo texto de HUD */
+  --vx-scrim: rgba(0, 0, 0, 0.55);             /* velo solo para modales */
+
+  --vx-text: var(--vx-gray-50);
+  --vx-text-muted: var(--vx-gray-300);
+  --vx-text-accent: var(--vx-coral);           /* no sobre gray-800 salvo texto grande */
+
+  --vx-line: var(--vx-gray-700);               /* decorativo: 1.57:1, no delimita controles */
+  --vx-line-control: var(--vx-gray-300);       /* límites de controles: ≥ 3:1 */
+  --vx-accent: var(--vx-coral);
+
+  /* ---- Tipografía (pilas locales) ---- */
+  --vx-font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --vx-font-display: "Bahnschrift", "DIN Alternate", "Arial Narrow", "Segoe UI", sans-serif;
+  --vx-font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+
+  --vx-text-xs: 0.8125rem;  /* 13 px @1080p — mínimo */
+  --vx-text-sm: 0.875rem;   /* 14 */
+  --vx-text-md: 1rem;       /* 16 */
+  --vx-text-lg: 1.125rem;   /* 18 */
+  --vx-text-xl: 1.375rem;   /* 22 */
+  --vx-text-2xl: 1.75rem;   /* 28 */
+  --vx-text-3xl: 2.25rem;   /* 36 */
+
+  --vx-leading-text: 1.4;
+  --vx-leading-tight: 1.15;
+  --vx-weight-regular: 400;
+  --vx-weight-strong: 600;
+  --vx-tracking-label: 0.06em;
+
+  /* ---- Espaciado (base 4 px @1080p) ---- */
+  --vx-space-1: 0.25rem;  /* 4 */
+  --vx-space-2: 0.5rem;   /* 8 */
+  --vx-space-3: 0.75rem;  /* 12 */
+  --vx-space-4: 1rem;     /* 16 */
+  --vx-space-5: 1.5rem;   /* 24 */
+  --vx-space-6: 2rem;     /* 32 */
+  --vx-space-7: 3rem;     /* 48 */
+
+  /* ---- Tamaños de control ---- */
+  --vx-control-sm: 2rem;      /* objetivo clicable mínimo */
+  --vx-control-md: 2.25rem;   /* filas densas */
+  --vx-control-lg: 2.5rem;    /* menú, botón principal */
+  --vx-panel-menu: 22rem;
+  --vx-panel-nav: 15rem;
+
+  /* ---- Forma ---- */
+  --vx-radius-sm: 2px;
+  --vx-radius-md: 4px;
+  --vx-border: 1px;
+  --vx-border-strong: 3px;
+  --vx-shadow-float: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* ---- Geometría del logo: diagonales a 30° ---- */
+  --vx-tan30: 0.5774;
+  --vx-cut: 0.75rem;                                   /* recorrido horizontal del corte */
+  --vx-cut-y: calc(var(--vx-cut) * var(--vx-tan30));   /* caída vertical a 30° */
+  --vx-slot: 3px;                                      /* ranura de espacio negativo */
+  --vx-mark-w: 4px;                                    /* barra de selección */
+
+  /* ---- Foco ---- */
+  --vx-focus-width: 2px;
+  --vx-focus-offset: 2px;
+  --vx-focus-color: var(--vx-coral);
+
+  /* ---- Movimiento ---- */
+  --vx-dur-fast: 120ms;
+  --vx-dur-base: 180ms;
+  --vx-dur-slow: 220ms;
+  --vx-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --vx-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --vx-shift: 8px;
+
+  /* ---- Capas ---- */
+  --vx-z-hud: 10;
+  --vx-z-panel: 20;
+  --vx-z-modal: 30;
+  --vx-z-toast: 40;
+}
+
+/* ---- Base ---- */
+
+/* Escala con la altura: 16 px a 1080p, legible a 720p, acotado en 4K. */
+:where(html) {
+  font-size: clamp(14px, 1.4815vh, 28px);
+}
+
+/* Documento transparente: solo las superficies de la UI pintan fondo. */
+:where(html, body) {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+:where(body) {
+  color: var(--vx-text);
+  font-family: var(--vx-font-ui);
+  font-size: var(--vx-text-md);
+  line-height: var(--vx-leading-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(:focus-visible) {
+  outline: var(--vx-focus-width) solid var(--vx-focus-color);
+  outline-offset: var(--vx-focus-offset);
+}
+
+:where(:focus:not(:focus-visible)) {
+  outline: none;
+}
+
+:where(kbd) {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 var(--vx-space-1);
+  border: var(--vx-border) solid var(--vx-line);
+  border-radius: var(--vx-radius-sm);
+  color: var(--vx-text-muted);
+  font: var(--vx-weight-strong) var(--vx-text-xs) / 1.5 var(--vx-font-ui);
+  text-align: center;
+}
+
+/* ---- Utilidades ---- */
+
+.vx-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.vx-label {
+  color: var(--vx-text-muted);
+  font-size: var(--vx-text-xs);
+  font-weight: var(--vx-weight-strong);
+  letter-spacing: var(--vx-tracking-label);
+  text-transform: uppercase;
+}
+
+.vx-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Cortes a 30°. Solo en contenedores decorativos (cabecera, placa de HUD,
+ * tarjeta destacada): clip-path recorta el anillo de foco y el área clicable,
+ * así que nunca en botones, inputs ni filas enfocables.
+ */
+.vx-cut-tr {
+  clip-path: polygon(0 0, calc(100% - var(--vx-cut)) 0, 100% var(--vx-cut-y), 100% 100%, 0 100%);
+}
+
+.vx-cut-bl {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, var(--vx-cut) 100%, 0 calc(100% - var(--vx-cut-y)));
+}
+
+/*
+ * Barra de selección con extremo diagonal y ranura. Úsala junto al estado
+ * semántico (aria-selected / aria-current) y un texto o icono, no sola.
+ */
+.vx-mark {
+  position: relative;
+  padding-left: calc(var(--vx-mark-w) + var(--vx-slot) + var(--vx-space-3));
+}
+
+.vx-mark::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--vx-mark-w);
+  background: var(--vx-accent);
+  clip-path: polygon(0 0, 100% calc(var(--vx-mark-w) * var(--vx-tan30)), 100% 100%, 0 100%);
+}
+
+/* Separador con cuña coral a 30° al inicio. */
+.vx-rule-diag {
+  position: relative;
+  height: 4px;
+  border: 0;
+  margin: var(--vx-space-3) 0;
+  background: linear-gradient(var(--vx-line), var(--vx-line)) left bottom / 100% 1px no-repeat;
+}
+
+.vx-rule-diag::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1.75rem;
+  height: 4px;
+  background: var(--vx-accent);
+  clip-path: polygon(0 0, calc(100% - 4px / var(--vx-tan30)) 0, 100% 100%, 0 100%);
+}
+
+/* ---- Movimiento reducido ---- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --vx-dur-fast: 0ms;
+    --vx-dur-base: 0ms;
+    --vx-dur-slow: 0ms;
+    --vx-shift: 0px;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

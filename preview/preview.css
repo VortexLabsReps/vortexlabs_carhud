@@ -1,0 +1,46 @@
+/* Solo para la vista previa: no se carga en FiveM. */
+@font-face { font-family: 'Outfit'; src: url('../html/fonts/outfit-400.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Outfit'; src: url('../html/fonts/outfit-500.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Outfit'; src: url('../html/fonts/outfit-600.woff2') format('woff2'); font-weight: 600; }
+
+:root { --bg: #000000; --panel: #0f0f0f; --line: #353539; --muted: #b4b4be; --accent: #fe3555; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #08111f; color: #fff; font-family: 'Outfit', system-ui, sans-serif; }
+body { display: flex; min-height: 100%; }
+
+.pv-side { width: 320px; flex: none; height: 100vh; overflow-y: auto; background: var(--bg); border-right: 1px solid var(--line); padding: 20px; }
+.pv-side header p { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 8px 0 0; }
+.pv-side code { color: #fff; }
+.pv-brand { font-size: 10px; letter-spacing: .15em; color: var(--muted); font-weight: 500; }
+.pv-side h1 { margin: 2px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+.pv-side section { padding: 14px 0; border-top: 1px solid var(--line); margin-top: 14px; }
+.pv-side h2 { margin: 0 0 10px; font-size: 10px; letter-spacing: .15em; font-weight: 500; color: var(--muted); text-transform: uppercase; }
+.pv-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pv-chips + .pv-chips, .pv-range + .pv-chips { margin-top: 10px; }
+.pv-chips button { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: #fff; border-radius: 6px; padding: 6px 10px; font: 500 12px 'Outfit', sans-serif; cursor: pointer; }
+.pv-chips button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: transparent; }
+.pv-range { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 12px; }
+.pv-range input { width: 100%; accent-color: var(--accent); }
+.pv-log pre { margin: 0; max-height: 160px; overflow: auto; font-size: 11px; color: var(--muted); white-space: pre-wrap; }
+
+.pv-stage { flex: 1; min-width: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; gap: 10px; }
+.pv-stage.is-zoomed { display: block; overflow: auto; padding: 0; }
+.pv-stage.is-zoomed .pv-screen { border-radius: 0; }
+.pv-stage.is-zoomed .pv-meta { display: none; }
+.pv-screen { position: relative; overflow: hidden; border-radius: 10px; transform-origin: 0 0; background: linear-gradient(180deg, #1c2933 0%, #26333b 44%, #131e24 45%, #10191f 100%); }
+.pv-screen iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; }
+.pv-scene, .pv-scene > div { position: absolute; }
+.pv-scene { inset: 0; }
+.pv-horizon { left: 0; right: 0; top: 40%; height: 7%; background: repeating-linear-gradient(90deg, #17242c 0 6%, transparent 6% 10%, #17242c 10% 17%, transparent 17% 21%); opacity: .6; clip-path: polygon(0 45%, 7% 45%, 7% 12%, 13% 12%, 13% 65%, 21% 65%, 21% 30%, 29% 30%, 29% 0, 35% 0, 35% 55%, 46% 55%, 46% 10%, 52% 10%, 52% 45%, 61% 45%, 61% 18%, 68% 18%, 68% 55%, 80% 55%, 80% 25%, 88% 25%, 88% 0, 96% 0, 96% 35%, 100% 35%, 100% 100%, 0 100%); }
+.pv-road { inset: 45% 0 0; background: #19232b; clip-path: polygon(47% 0, 53% 0, 90% 100%, 10% 100%); }
+.pv-roadline { inset: 46% 0 0; background: linear-gradient(180deg, #a4b2c000, #a4b2c015); clip-path: polygon(49.8% 0, 50.2% 0, 51% 100%, 49% 100%); }
+/* Escenas de prueba de legibilidad: día, asfalto claro (hormigón al sol) y arena. */
+.pv-screen[data-scene="day"] { background: linear-gradient(180deg, #8fb8d8 0%, #c9dcea 44%, #7d8a86 45%, #8f9894 100%); }
+.pv-screen[data-scene="day"] .pv-road { background: #9aa09e; }
+.pv-screen[data-scene="concrete"] { background: linear-gradient(180deg, #d9e4ec 0%, #f2f4f5 44%, #c9c8c2 45%, #d8d6cf 100%); }
+.pv-screen[data-scene="concrete"] .pv-road { background: #e3e1da; }
+.pv-screen[data-scene="sand"] { background: linear-gradient(180deg, #f3d9a8 0%, #fbe9c6 44%, #d8b47a 45%, #e6c58f 100%); }
+.pv-screen[data-scene="sand"] .pv-road { background: #ecd3a0; }
+.pv-screen[data-scene]:not([data-scene="night"]) .pv-horizon { opacity: .25; }
+.pv-map { position: absolute; display: flex; align-items: center; justify-content: center; background: repeating-linear-gradient(25deg, #26333b 0 1px, #1b272f 1px 21px); border: 1px solid #384650; border-radius: 6px; color: #a4b2c0; letter-spacing: 1px; font-size: 11px; }
+.pv-meta { font-size: 12px; color: var(--muted); }

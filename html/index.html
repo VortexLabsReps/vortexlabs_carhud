@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>vortexlabs_carhud</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="fc-root" class="fc-root" data-visible="false" data-values="false">
+
+  <!-- HUD del vehículo: una sola capa con una sola transición de visibilidad para el
+       velocímetro (con nitro y fila inferior) y la ubicación; nunca se desincronizan. -->
+  <div class="fc-hud" data-hud>
+
+  <!-- Conjunto único abajo a la derecha: nitro, velocímetro, intermitentes,
+       acelerador y fila inferior (cinturón, luces, crucero | combustible, motor) -->
+  <section id="fc-cluster" class="fc-module-box fc-cluster" data-box="cluster" data-profile="car" data-nitro="false">
+    <div class="fc-notice" data-notice hidden aria-live="polite"></div>
+
+    <div class="fc-nitro" data-nitro-ring data-state="idle" role="meter" aria-valuemin="0" aria-valuemax="100" hidden>
+      <svg class="fc-nitro-dial" viewBox="0 0 220 200" aria-hidden="true">
+        <g class="fc-arc-base" data-nitro-base></g>
+        <g data-nitro-segments></g>
+      </svg>
+      <span class="fc-nitro-icon" data-icon="nitro"></span>
+      <small data-nitro-value></small>
+    </div>
+
+    <div class="fc-main">
+      <svg class="fc-arc" viewBox="0 0 220 200" aria-hidden="true">
+        <g class="fc-arc-base" data-segments-base></g>
+        <g data-segments></g>
+        <line class="fc-cruise-mark" data-cruise-mark x1="0" y1="0" x2="0" y2="0"></line>
+      </svg>
+      <div class="fc-reading">
+        <span class="fc-secondary" data-secondary></span>
+        <strong class="fc-speed" data-speed></strong>
+        <div class="fc-unitline"><span data-unit>KM/H</span><b data-gear-sep>·</b><em data-gear>1</em></div>
+      </div>
+      <span class="fc-turn fc-turn-left" data-turn="left" data-state="off" role="img"></span>
+      <span class="fc-turn fc-turn-right" data-turn="right" data-state="off" role="img"></span>
+    </div>
+
+    <div class="fc-gas" data-gas>
+      <span data-gas-label>GAS</span>
+      <div data-throttle role="meter" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+
+    <div class="fc-footer" data-footer>
+      <div class="fc-tts" data-telltales>
+        <span class="fc-tt fc-belt" data-tt="belt" data-state="off" role="img"></span>
+        <span class="fc-tt fc-light" data-tt="lights" data-state="off" role="img"></span>
+        <span class="fc-tt fc-cruise" data-tt="cruise" data-state="off" role="img"></span>
+      </div>
+      <div class="fc-alt" data-alt hidden>
+        <div class="fc-alt-cell" data-alt-cell="a"><span data-alt-label></span><strong><i data-alt-value></i><small data-alt-unit></small></strong></div>
+        <div class="fc-alt-cell" data-alt-cell="b"><span data-alt-label></span><strong><i class="fc-vs-arrow" data-vs-arrow></i><i data-alt-value></i><small data-alt-unit></small></strong></div>
+      </div>
+      <span class="fc-divider" data-divider aria-hidden="true"></span>
+      <div class="fc-mini" data-mod="fuel" role="group">
+        <span class="fc-mini-icon" data-icon="fuel"></span>
+        <div class="fc-mini-track"><b data-bar></b></div>
+        <small data-value></small>
+      </div>
+      <div class="fc-mini" data-mod="engine" role="group">
+        <span class="fc-mini-icon" data-icon="engine"></span>
+        <div class="fc-mini-track"><b data-bar></b></div>
+        <small data-value></small>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ubicación: encima del minimapa y con su mismo ancho exterior -->
+  <section id="fc-location" class="fc-loc" data-box="location" data-show="false">
+    <div class="fc-loc-dir"><span class="fc-loc-arrow" data-loc-arrow></span><span data-loc-sector>N</span></div>
+    <div class="fc-loc-place"><strong data-loc-main></strong><span data-loc-sub></span></div>
+  </section>
+
+  </div>
+
+  <!-- Diagnóstico de expulsión (/carhudcrash, solo administradores). Oculto por defecto. -->
+  <aside class="fc-diag" data-diag hidden aria-live="off"></aside>
+
+  <!-- Administración (/carhudadmin): separada del menú personal; el servidor
+       comprueba los permisos al abrir y en cada guardado. -->
+  <div class="fc-settings-layer fc-admin-layer" data-admin hidden>
+    <aside class="fc-panel fc-admin" role="dialog" aria-modal="true" aria-labelledby="fc-admin-title">
+      <header class="fc-panel-head">
+        <div class="fc-panel-title">
+          <img class="fc-logo" src="vortexlabs-logo.png" alt="VortexLabs" width="36" height="36">
+          <div>
+            <span class="fc-brand">VortexLabs · Admin</span>
+            <h1 id="fc-admin-title" data-i18n="admin.title"></h1>
+          </div>
+        </div>
+        <button type="button" class="fc-icon-btn" data-admin-action="cancel" data-i18n-label="admin.cancel"></button>
+      </header>
+      <nav class="fc-tabs" data-admin-tabs role="tablist"></nav>
+      <div class="fc-panel-body" data-admin-body></div>
+      <p class="fc-admin-status" data-admin-status hidden></p>
+      <footer class="fc-panel-foot">
+        <button type="button" class="fc-btn-ghost fc-danger" data-admin-action="defaults" data-i18n="admin.defaults"></button>
+        <div class="fc-row-buttons">
+          <button type="button" class="fc-btn-ghost" data-admin-action="cancel" data-i18n="admin.cancel"></button>
+          <button type="button" class="fc-btn-primary" data-admin-action="save" data-i18n="admin.save"></button>
+        </div>
+      </footer>
+    </aside>
+  </div>
+
+  <!-- Ajustes: única parte de la interfaz que toma el foco -->
+  <div class="fc-settings-layer" data-settings hidden>
+    <aside class="fc-panel" role="dialog" aria-modal="true" aria-labelledby="fc-settings-title">
+      <header class="fc-panel-head">
+        <div>
+          <span class="fc-brand">VortexLabs</span>
+          <h1 id="fc-settings-title" data-i18n="settings.title"></h1>
+        </div>
+        <button type="button" class="fc-icon-btn" data-action="close" data-i18n-label="settings.close"></button>
+      </header>
+
+      <div class="fc-panel-body">
+        <section class="fc-group" data-rule="allowUnit">
+          <h2 data-i18n="settings.units"></h2>
+          <div class="fc-segmented" role="radiogroup">
+            <button type="button" role="radio" data-unit-option="kmh">KM/H</button>
+            <button type="button" role="radio" data-unit-option="mph">MPH</button>
+          </div>
+        </section>
+
+        <section class="fc-group" data-rule="allowColor">
+          <h2 data-i18n="settings.color"></h2>
+          <div class="fc-swatches" data-swatches></div>
+          <label class="fc-hex"><span>#</span><input type="text" maxlength="6" spellcheck="false" data-hex></label>
+        </section>
+
+        <section class="fc-group" data-rule="allowModules">
+          <h2 data-i18n="settings.modules"></h2>
+          <div class="fc-toggles" data-module-toggles></div>
+        </section>
+
+        <section class="fc-group">
+          <h2 data-i18n="settings.display"></h2>
+          <label class="fc-toggle"><span data-i18n="settings.values"></span><input type="checkbox" data-values-toggle><i></i></label>
+        </section>
+
+        <section class="fc-group">
+          <h2 data-i18n="settings.sound"></h2>
+          <div class="fc-range-row">
+            <input type="range" min="0" max="100" step="1" data-volume>
+            <output data-volume-out></output>
+            <button type="button" class="fc-btn-ghost" data-action="test-sound" data-i18n="settings.test"></button>
+          </div>
+        </section>
+
+        <section class="fc-group" data-rule="allowLayout">
+          <h2 data-i18n="settings.layout"></h2>
+          <div class="fc-range-row"><span class="fc-range-label" data-i18n="settings.clusterScale"></span><input type="range" min="80" max="150" step="1" data-scale="cluster"><output data-scale-out="cluster"></output><button type="button" class="fc-reset-btn" data-action="reset-scale" data-i18n-label="settings.resetScale">↺</button></div>
+          <div class="fc-range-row"><span class="fc-range-label" data-i18n="settings.clusterOpacity"></span><input type="range" min="40" max="100" step="1" data-opacity="cluster"><output data-opacity-out="cluster"></output></div>
+          <div class="fc-row-buttons">
+            <button type="button" class="fc-btn-ghost" data-action="edit-layout" data-i18n="settings.move"></button>
+            <button type="button" class="fc-btn-ghost" data-action="reset-layout" data-i18n="settings.resetLayout"></button>
+          </div>
+          <p class="fc-hint" data-layout-hint hidden data-i18n="settings.moveHint"></p>
+        </section>
+
+        <section class="fc-group" data-rule="locationAvailable">
+          <h2 data-i18n="settings.location"></h2>
+          <label class="fc-toggle"><span data-i18n="settings.locationShow"></span><input type="checkbox" data-loc-toggle><i></i></label>
+          <div class="fc-range-row" data-rule="allowLayout"><span class="fc-range-label" data-i18n="settings.clusterScale"></span><input type="range" min="80" max="150" step="1" data-scale="location"><output data-scale-out="location"></output><button type="button" class="fc-reset-btn" data-action="reset-loc-scale" data-i18n-label="settings.resetScale">↺</button></div>
+          <p class="fc-hint" data-i18n="settings.locationHint"></p>
+        </section>
+      </div>
+
+      <footer class="fc-panel-foot">
+        <button type="button" class="fc-btn-ghost fc-danger" data-action="reset" data-i18n="settings.reset"></button>
+        <button type="button" class="fc-btn-primary" data-action="close" data-i18n="settings.done"></button>
+      </footer>
+      <div class="fc-signature">VortexLabs Car HUD <span data-version></span></div>
+    </aside>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

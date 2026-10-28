@@ -1,0 +1,16 @@
+# Server state written at runtime by the resource (admin menu values and
+# installed nitro). Never commit a server's data; the resource creates the
+# files on first save.
+data/*.json
+
+# Development
+dev/node_modules/
+dev/.cache/
+dist/
+
+# Local backups and editor/OS files
+*.bak
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

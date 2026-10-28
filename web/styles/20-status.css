@@ -1,0 +1,43 @@
+/* Combustible y motor (fila inferior) y avisos. */
+
+.fc-mini { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 30px; }
+.fc-mini-icon { display: flex; color: var(--vx-gray-300); transition: color var(--vx-dur-base); }
+.fc-mini-icon svg { width: 15px; height: 15px; stroke-width: 1.7; display: block; }
+.fc-mini-track { width: 29px; height: 2px; background: var(--vx-gray-700); border-radius: 0; overflow: hidden; }
+.fc-mini-track b { display: block; width: 100%; height: 100%; background: var(--vx-gray-50); transform-origin: 0 50%; transform: scaleX(0); transition: background-color var(--vx-dur-base); }
+.fc-mini small { font-size: 11px; color: var(--vx-gray-300); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fc-mini small small { font-size: 10px; margin-left: 1px; }
+
+/* Porcentajes ocultos por defecto (se activan en ajustes) */
+.fc-root[data-values="false"] .fc-mini small,
+.fc-root[data-values="false"] .fc-nitro small { display: none; }
+
+.fc-mini[data-warn="true"] .fc-mini-icon,
+.fc-mini[data-warn="true"] small { color: var(--fc-warn); }
+.fc-mini[data-warn="true"] .fc-mini-track b { background: var(--fc-warn); }
+.fc-mini[data-nodata="true"] { opacity: .4; }
+.fc-mini[data-running="false"] .fc-mini-icon { opacity: .55; } /* motor parado: atenuado, conserva el color de su salud */
+
+/* Avisos: encima del conjunto, alineados a la derecha */
+.fc-notice {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  max-width: 320px;
+  background: var(--fc-plate);
+  border: 1px solid var(--fc-plate-line);
+  border-right: var(--vx-border-strong) solid var(--fc-warn);
+  color: var(--fc-warn);
+  padding: 8px 12px;
+  font: var(--vx-weight-strong) 11px var(--fc-font);
+  letter-spacing: .02em;
+  text-align: right;
+  white-space: nowrap;
+  border-radius: var(--vx-radius-sm);
+  text-shadow: none;
+  animation: fc-notice-in var(--vx-dur-base) var(--vx-ease-out);
+}
+/* El tipo se distingue también por la forma: barra lateral del color del aviso. */
+.fc-notice[data-kind="info"] { color: var(--fc-fg); border-right-color: var(--vx-gray-300); }
+.fc-notice[data-kind="danger"] { color: var(--fc-danger); border-right-color: var(--fc-danger); }
+@keyframes fc-notice-in { from { opacity: 0; transform: translateY(4px); } }

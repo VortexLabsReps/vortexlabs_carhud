@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>vortexlabs_carhud · Vista previa</title>
+<link rel="stylesheet" href="preview.css">
+</head>
+<body>
+<aside class="pv-side">
+  <header>
+    <span class="pv-brand">VORTEXLABS</span>
+    <h1>vortexlabs_carhud</h1>
+    <p>Vista previa con <strong>datos simulados</strong>. El fondo, el minimapa y estos controles no forman parte del recurso: el HUD de la derecha es exactamente <code>html/index.html</code>.</p>
+  </header>
+
+  <section>
+    <h2>Vehículo</h2>
+    <div class="pv-chips" data-group="category">
+      <button data-value="car" aria-pressed="true">Coche</button>
+      <button data-value="motorcycle">Moto</button>
+      <button data-value="boat">Lancha</button>
+      <button data-value="plane">Avión</button>
+      <button data-value="heli">Helicóptero</button>
+      <button data-value="bicycle">Bicicleta</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Situación</h2>
+    <div class="pv-chips" data-group="scenario">
+      <button data-value="drive" aria-pressed="true">Conducción</button>
+      <button data-value="max">A tope</button>
+      <button data-value="idle">Parado</button>
+      <button data-value="reverse">Marcha atrás</button>
+      <button data-value="coast">Sin gas</button>
+      <button data-value="manual">Manual</button>
+    </div>
+    <label class="pv-range">Acelerador manual <input type="range" min="0" max="100" value="60" data-pedal></label>
+    <label class="pv-range">Salud del motor <input type="range" min="0" max="100" value="92" data-engine-health></label>
+  </section>
+
+  <section>
+    <h2>Estado</h2>
+    <div class="pv-chips">
+      <button data-toggle="belt" aria-pressed="true">Cinturón</button>
+      <button data-cycle="lights">Luces: cortas</button>
+      <button data-cycle="ind">Intermitente: no</button>
+      <button data-toggle="cruise" aria-pressed="false">Crucero</button>
+      <button data-toggle="engineOn" aria-pressed="true">Motor encendido</button>
+      <button data-cycle="nitro">Nitro: equipado</button>
+      <button data-toggle="nitroOn" aria-pressed="false">Usar nitro</button>
+      <button data-toggle="warnings" aria-pressed="false">Avisos</button>
+      <button data-toggle="destroyed" aria-pressed="false">Destruido</button>
+      <button data-cycle="fuel">Combustible: proveedor</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Pantalla</h2>
+    <div class="pv-chips" data-group="res">
+      <button data-value="1920x1080" aria-pressed="true">1080p</button>
+      <button data-value="2560x1440">1440p</button>
+      <button data-value="3840x2160">4K</button>
+      <button data-value="3440x1440">21:9</button>
+      <button data-value="5120x1440">32:9</button>
+      <button data-value="1280x1024">5:4</button>
+    </div>
+    <div class="pv-chips" data-group="place">
+      <button data-value="city" aria-pressed="true">Ciudad</button>
+      <button data-value="highway">Carretera</button>
+      <button data-value="sea">Mar</button>
+      <button data-value="long">Nombre largo</button>
+      <button data-value="hidden">Minimapa oculto</button>
+    </div>
+    <div class="pv-chips" data-group="scene">
+      <button data-value="night" aria-pressed="true">Noche</button>
+      <button data-value="day">Día</button>
+      <button data-value="concrete">Asfalto claro</button>
+      <button data-value="sand">Arena</button>
+    </div>
+    <div class="pv-chips" data-group="zoom">
+      <button data-value="fit" aria-pressed="true">Ajustar</button>
+      <button data-value="1">100 %</button>
+      <button data-value="2">200 %</button>
+    </div>
+    <label class="pv-range">Zona segura <input type="range" min="85" max="100" value="100" data-safe></label>
+    <div class="pv-chips">
+      <button data-action="settings">Abrir ajustes del HUD</button>
+      <button data-action="admin">Abrir administración</button>
+      <button data-action="units">Cambiar km/h · mph</button>
+      <button data-action="reset-prefs">Borrar preferencias</button>
+    </div>
+  </section>
+
+  <section class="pv-log">
+    <h2>Mensajes NUI → Lua</h2>
+    <pre data-log></pre>
+  </section>
+</aside>
+
+<main class="pv-stage" data-stage>
+  <div class="pv-screen" data-screen>
+    <div class="pv-scene" aria-hidden="true">
+      <div class="pv-horizon"></div>
+      <div class="pv-road"></div>
+      <div class="pv-roadline"></div>
+    </div>
+    <div class="pv-map" data-map aria-hidden="true">MINIMAPA</div>
+    <iframe title="HUD" src="../html/index.html" data-hud allowtransparency="true"></iframe>
+  </div>
+  <div class="pv-meta" data-meta></div>
+</main>
+
+<script src="sim.js"></script>
+</body>
+</html>
